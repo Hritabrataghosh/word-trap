@@ -16,6 +16,7 @@ export default function App() {
   const [trap3,setTrap3] = useState([]);
   const [trap4,setTrap4] = useState([]);
   const [bestTraps,setBestTraps] = useState([]);
+  
 
   useEffect(()=>{
 
@@ -60,6 +61,7 @@ export default function App() {
       <SearchBar onSearch={handleSearch} />
 
       <WordList words={results} />
+      <TrapSection title="Best Trap Moves" traps={bestTraps} />
 
       <TrapSection title="2 Letter Traps" traps={trap2} />
 
