@@ -99,3 +99,38 @@ font-size:12px;
   border-radius:6px;
   font-size:14px;
 }
+.trap-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  margin-bottom:6px;
+}
+
+.trap-ending{
+  background:#2db2e8;
+  padding:4px 8px;
+  border-radius:6px;
+  font-weight:bold;
+}
+
+.trap-words{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+
+.word{
+  background:#1e293b;
+  padding:3px 6px;
+  border-radius:5px;
+  font-size:13px;
+}
+
+.more{
+  background:#475569;
+  padding:3px 6px;
+  border-radius:5px;
+  cursor:pointer;
+  font-size:13px;
+}

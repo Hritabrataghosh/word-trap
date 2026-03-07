@@ -1,27 +1,51 @@
+import { useState } from "react"
+
 export default function TrapSection({ title, traps = [] }) {
+
   return (
     <div className="section">
       <h2>{title}</h2>
 
-      <div className="trap-container">
-        {traps.map((t, i) => (
-          <div key={i} className="trap-row">
+      {traps.map((t, i) => (
+        <TrapRow key={i} trap={t}/>
+      ))}
 
-            <span className="trap-ending">
-              {t.ending} ({t.solutions.length}) →
-            </span>
-
-            <div className="trap-words">
-              {t.solutions.map((w, j) => (
-                <span key={j} className="word">
-                  {w}
-                </span>
-              ))}
-            </div>
-
-          </div>
-        ))}
-      </div>
     </div>
+  )
+}
+
+function TrapRow({ trap }) {
+
+  const [open,setOpen] = useState(false)
+
+  const visible = open ? trap.solutions : trap.solutions.slice(0,3)
+
+  return (
+
+    <div className="trap-row">
+
+      <span className="trap-ending">
+        {trap.ending} ({trap.solutions.length}) →
+      </span>
+
+      <div className="trap-words">
+
+        {visible.map((w,i)=>(
+          <span key={i} className="word">{w}</span>
+        ))}
+
+        {!open && trap.solutions.length > 3 && (
+          <span
+            className="more"
+            onClick={()=>setOpen(true)}
+          >
+            +{trap.solutions.length - 3}
+          </span>
+        )}
+
+      </div>
+
+    </div>
+
   )
 }
