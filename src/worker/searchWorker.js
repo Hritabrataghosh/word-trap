@@ -31,7 +31,7 @@ function search(prefix){
 
 }
 
-function buildTraps(results,len){
+function buildTraps(results,len,prefix){
 
   const traps = {}
 
@@ -43,13 +43,16 @@ function buildTraps(results,len){
 
     const next = prefixMap[end] || []
 
-    const count = next.length
+    // keep only valid continuation words
+    const filtered = next.filter(x => x.startsWith(prefix))
+
+    const count = filtered.length
 
     if(count > 0 && count <= 6){
 
       if(!traps[end]){
 
-        traps[end] = next.slice(0,6)
+        traps[end] = filtered.slice(0,6)
 
       }
 
@@ -63,6 +66,7 @@ function buildTraps(results,len){
     solutions
 
   }))
+
 }
 
 self.onmessage = e =>{
@@ -86,9 +90,9 @@ self.onmessage = e =>{
   // limit displayed words
   const results = allResults.slice(0,30)
 
-  const trap2 = buildTraps(allResults,2)
-  const trap3 = buildTraps(allResults,3)
-  const trap4 = buildTraps(allResults,4)
+  const trap2 = buildTraps(allResults,2,payload)
+const trap3 = buildTraps(allResults,3,payload)
+const trap4 = buildTraps(allResults,4,payload)
 
   const best = [...trap2,...trap3,...trap4]
     .sort((a,b)=>a.solutions.length-b.solutions.length)
