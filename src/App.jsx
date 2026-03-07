@@ -67,7 +67,8 @@ const extraWords = extraText
 
 worker.current.postMessage({
 type:"LOAD_EXTRA",
-payload:extraWords)
+payload:extraWords
+})
 
 }
 
