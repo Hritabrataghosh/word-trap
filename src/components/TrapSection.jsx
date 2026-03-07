@@ -2,28 +2,51 @@ import { useState } from "react"
 
 export default function TrapSection({ title, traps = [] }) {
 
+  const [open,setOpen] = useState(false)
+
   return (
+
     <div className="section">
 
-      <h2>{title}</h2>
+      <div
+        className="section-header"
+        onClick={()=>setOpen(!open)}
+      >
 
-      <div className="trap-grid">
+        <span>{open ? "▼" : "▶"} {title}</span>
 
-        {traps.map((t,i)=>(
-          <TrapRow key={i} trap={t}/>
-        ))}
+        <span className="count">
+          {traps.length} traps
+        </span>
 
       </div>
 
+      {open && (
+
+        <div className="trap-grid">
+
+          {traps.map((t,i)=>(
+
+            <TrapRow key={i} trap={t}/>
+
+          ))}
+
+        </div>
+
+      )}
+
     </div>
+
   )
 }
 
 function TrapRow({trap}){
 
-  const [open,setOpen] = useState(false)
+  const [expand,setExpand] = useState(false)
 
-  const words = open ? trap.solutions : trap.solutions.slice(0,3)
+  const words = expand
+    ? trap.solutions
+    : trap.solutions.slice(0,3)
 
   return(
 
@@ -36,16 +59,20 @@ function TrapRow({trap}){
       <div className="trap-words">
 
         {words.map((w,i)=>(
-          <span key={i} className="word">{w}</span>
+          <span key={i} className="word">
+            {w}
+          </span>
         ))}
 
-        {!open && trap.solutions.length > 3 && (
+        {!expand && trap.solutions.length > 3 && (
+
           <span
             className="more"
-            onClick={()=>setOpen(true)}
+            onClick={()=>setExpand(true)}
           >
             +{trap.solutions.length-3}
           </span>
+
         )}
 
       </div>
