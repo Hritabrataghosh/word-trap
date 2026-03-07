@@ -81,26 +81,29 @@ self.onmessage = e =>{
 
   if(type==="SEARCH"){
 
-    const results = search(payload)
+  const allResults = search(payload)
 
-    const trap2 = buildTraps(results,2)
-    const trap3 = buildTraps(results,3)
-    const trap4 = buildTraps(results,4)
+  // limit displayed words
+  const results = allResults.slice(0,30)
 
-    const best = [...trap2,...trap3,...trap4]
-      .sort((a,b)=>a.solutions.length-b.solutions.length)
-      .slice(0,20)
+  const trap2 = buildTraps(allResults,2)
+  const trap3 = buildTraps(allResults,3)
+  const trap4 = buildTraps(allResults,4)
 
-    postMessage({
+  const best = [...trap2,...trap3,...trap4]
+    .sort((a,b)=>a.solutions.length-b.solutions.length)
+    .slice(0,20)
 
-      results,
-      trap2,
-      trap3,
-      trap4,
-      best
+  postMessage({
 
-    })
+    results,
+    trap2,
+    trap3,
+    trap4,
+    best
 
-  }
+  })
+
+}
 
 }
