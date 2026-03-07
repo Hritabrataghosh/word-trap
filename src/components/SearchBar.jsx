@@ -1,39 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"
 
 export default function SearchBar({ onSearch }) {
 
-const [value,setValue] = useState("");
+  const [query, setQuery] = useState("")
 
-function handleChange(e){
+  useEffect(() => {
 
-const v = e.target.value;
+    const t = setTimeout(() => {
+      onSearch(query)
+    }, 150)
 
-setValue(v);
-onSearch(v);
+    return () => clearTimeout(t)
 
-}
+  }, [query])
 
-function handleFocus(){
+  return (
 
-setValue("");
-onSearch("");
+    <input
+      className="search"
+      placeholder="Type starting letters..."
+      value={query}
+      onChange={e => setQuery(e.target.value)}
+      onFocus={() => setQuery("")}
+    />
 
-}
-
-return(
-
-<div className="search-container">
-
-<input
-type="text"
-value={value}
-placeholder="Search letters..."
-onChange={handleChange}
-onFocus={handleFocus}
-/>
-
-</div>
-
-);
-
+  )
 }

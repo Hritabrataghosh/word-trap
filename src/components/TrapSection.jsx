@@ -1,26 +1,51 @@
+import { useState } from "react"
+
 export default function TrapSection({ title, traps = [] }) {
 
-return (
+  const [selected,setSelected] = useState(null)
 
-<div className="section">
+  return (
 
-<h2>{title}</h2>
+    <div className="section">
 
-<div className="list">
+      <h2>{title}</h2>
 
-{traps.map((t,i)=>(
-<span key={i} className="word">
-{t.word} → {t.ending} ({t.solutions}) 
-<span style={{color:"#38bdf8"}}>
-{t.solutions===1 ? "🔥" : t.solutions<=3 ? "⚡" : ""}
-</span>
-</span>
-))}
+      <div className="list">
 
-</div>
+        {traps.map((t,i)=>(
+          <span
+            key={i}
+            className="trap-chip"
+            onClick={()=>setSelected(t)}
+          >
+            {t.ending} ({t.solutions.length})
+          </span>
+        ))}
 
-</div>
+      </div>
 
-);
+      {selected && (
+
+        <div className="trap-details">
+
+          <h3>
+            Trap "{selected.ending}"
+          </h3>
+
+          <div className="list">
+
+            {selected.solutions.map((w,i)=>(
+              <span key={i} className="word">{w}</span>
+            ))}
+
+          </div>
+
+        </div>
+
+      )}
+
+    </div>
+
+  )
 
 }
