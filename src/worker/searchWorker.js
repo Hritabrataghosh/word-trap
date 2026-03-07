@@ -1,19 +1,24 @@
 let words = []
-let prefixMap = {}
 
-function buildPrefixIndex(){
+// prefix index
+const prefixMap = new Map()
 
-  for (let w of words){
+// build prefix index once
+function buildIndex(){
+
+  for(const w of words){
 
     for(let i=1;i<=4;i++){
 
-      if(w.length < i) continue
+      if(w.length < i) break
 
       const p = w.slice(0,i)
 
-      if(!prefixMap[p]) prefixMap[p] = []
+      if(!prefixMap.has(p)){
+        prefixMap.set(p,[])
+      }
 
-      prefixMap[p].push(w)
+      prefixMap.get(p).push(w)
 
     }
 
@@ -21,48 +26,50 @@ function buildPrefixIndex(){
 
 }
 
+// fast prefix search
 function search(prefix){
 
   if(!prefix) return []
 
-  prefix = prefix.toLowerCase()
-
-  return prefixMap[prefix] || []
+  return prefixMap.get(prefix) || []
 
 }
 
+// build traps
 function buildTraps(results,len){
 
-  const traps = {}
+  const trapMap = new Map()
 
-  for(const word of results){
+  for(const w of results){
 
-    if(word.length <= len) continue
+    if(w.length <= len) continue
 
-    const ending = word.slice(-len)
+    const end = w.slice(-len)
 
-    const next = results.filter(w => w.startsWith(ending))
+    if(!trapMap.has(end)){
+      trapMap.set(end,[])
+    }
 
-    const count = next.length
+    trapMap.get(end).push(w)
 
-    if(count > 0 && count <= 6){
+  }
 
-      if(!traps[ending]){
+  const traps = []
 
-        traps[ending] = next.slice(0,6)
+  for(const [ending,list] of trapMap.entries()){
 
-      }
+    if(list.length <= 6){
+
+      traps.push({
+        ending,
+        solutions:list.slice(0,6)
+      })
 
     }
 
   }
 
-  return Object.entries(traps).map(([ending,solutions])=>({
-
-    ending,
-    solutions
-
-  }))
+  return traps
 
 }
 
@@ -74,7 +81,7 @@ self.onmessage = e =>{
 
     words = payload
 
-    buildPrefixIndex()
+    buildIndex()
 
     return
 
@@ -82,29 +89,26 @@ self.onmessage = e =>{
 
   if(type==="SEARCH"){
 
-  const allResults = search(payload)
+    const allResults = search(payload)
 
-  // limit displayed words
-  const results = allResults.slice(0,30)
+    const results = allResults.slice(0,30)
 
-  const trap2 = buildTraps(allResults,2,payload)
-const trap3 = buildTraps(allResults,3,payload)
-const trap4 = buildTraps(allResults,4,payload)
+    const trap2 = buildTraps(allResults,2)
+    const trap3 = buildTraps(allResults,3)
+    const trap4 = buildTraps(allResults,4)
 
-  const best = [...trap2,...trap3,...trap4]
-    .sort((a,b)=>a.solutions.length-b.solutions.length)
-    .slice(0,20)
+    const best = [...trap2,...trap3,...trap4]
+      .sort((a,b)=>a.solutions.length-b.solutions.length)
+      .slice(0,20)
 
-  postMessage({
+    postMessage({
+      results,
+      trap2,
+      trap3,
+      trap4,
+      best
+    })
 
-    results,
-    trap2,
-    trap3,
-    trap4,
-    best
-
-  })
-
-}
+  }
 
 }

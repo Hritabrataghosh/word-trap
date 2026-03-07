@@ -1,28 +1,30 @@
-import { useState, useEffect } from "react"
+import {useState,useEffect} from "react"
 
-export default function SearchBar({ onSearch }) {
+export default function SearchBar({onSearch}){
 
-  const [query, setQuery] = useState("")
+const [value,setValue] = useState("")
 
-  useEffect(() => {
+useEffect(()=>{
 
-    const t = setTimeout(() => {
-      onSearch(query)
-    }, 150)
+const t = setTimeout(()=>{
 
-    return () => clearTimeout(t)
+onSearch(value)
 
-  }, [query])
+},100)
 
-  return (
+return ()=>clearTimeout(t)
 
-    <input
-      className="search"
-      placeholder="Type starting letters..."
-      value={query}
-      onChange={e => setQuery(e.target.value)}
-      onFocus={() => setQuery("")}
-    />
+},[value])
 
-  )
+return(
+
+<input
+className="search"
+placeholder="Enter starting letters..."
+value={value}
+onChange={e=>setValue(e.target.value)}
+/>
+
+)
+
 }
