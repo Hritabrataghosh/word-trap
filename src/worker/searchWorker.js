@@ -1,10 +1,10 @@
-let words = []
+let commonWords = []
+let extraWords = []
 
-// prefix index
-const prefixMap = new Map()
+const commonIndex = new Map()
+const extraIndex = new Map()
 
-// build prefix index once
-function buildIndex(){
+function buildIndex(words,map){
 
   for(const w of words){
 
@@ -14,11 +14,11 @@ function buildIndex(){
 
       const p = w.slice(0,i)
 
-      if(!prefixMap.has(p)){
-        prefixMap.set(p,[])
+      if(!map.has(p)){
+        map.set(p,[])
       }
 
-      prefixMap.get(p).push(w)
+      map.get(p).push(w)
 
     }
 
@@ -26,16 +26,18 @@ function buildIndex(){
 
 }
 
-// fast prefix search
 function search(prefix){
 
-  if(!prefix) return []
+  const common = commonIndex.get(prefix) || []
+  const extra = extraIndex.get(prefix) || []
 
-  return prefixMap.get(prefix) || []
+  return {
+    common,
+    extra
+  }
 
 }
 
-// build traps
 function buildTraps(results,len){
 
   const trapMap = new Map()
@@ -77,11 +79,19 @@ self.onmessage = e =>{
 
   const {type,payload} = e.data
 
-  if(type==="LOAD"){
+  if(type==="LOAD_COMMON"){
 
-    words = payload
+    commonWords = payload
+    buildIndex(commonWords,commonIndex)
 
-    buildIndex()
+    return
+
+  }
+
+  if(type==="LOAD_EXTRA"){
+
+    extraWords = payload
+    buildIndex(extraWords,extraIndex)
 
     return
 
@@ -89,24 +99,33 @@ self.onmessage = e =>{
 
   if(type==="SEARCH"){
 
-    const allResults = search(payload)
+    const {common,extra} = search(payload)
 
-    const results = allResults.slice(0,30)
+    const resultsCommon = common.slice(0,30)
 
-    const trap2 = buildTraps(allResults,2)
-    const trap3 = buildTraps(allResults,3)
-    const trap4 = buildTraps(allResults,4)
+    let resultsExtra = []
 
-    const best = [...trap2,...trap3,...trap4]
+    if(resultsCommon.length < 30){
+      resultsExtra = extra.slice(0,30-resultsCommon.length)
+    }
+
+    const traps2 = buildTraps(common,2)
+    const traps3 = buildTraps(common,3)
+    const traps4 = buildTraps(common,4)
+
+    const best = [...traps2,...traps3,...traps4]
       .sort((a,b)=>a.solutions.length-b.solutions.length)
       .slice(0,20)
 
     postMessage({
-      results,
-      trap2,
-      trap3,
-      trap4,
+
+      resultsCommon,
+      resultsExtra,
+      traps2,
+      traps3,
+      traps4,
       best
+
     })
 
   }

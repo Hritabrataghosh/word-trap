@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from "react"
+import { useEffect, useRef, useState } from "react"
 import SearchBar from "./components/SearchBar"
 import WordList from "./components/WordList"
 import TrapSection from "./components/TrapSection"
@@ -7,7 +7,8 @@ export default function App(){
 
 const worker = useRef(null)
 
-const [results,setResults] = useState([])
+const [commonResults,setCommonResults] = useState([])
+const [extraResults,setExtraResults] = useState([])
 
 const [trap2,setTrap2] = useState([])
 const [trap3,setTrap3] = useState([])
@@ -23,32 +24,54 @@ new URL("./worker/searchWorker.js",import.meta.url),
 
 worker.current.onmessage = e =>{
 
-const {results,trap2,trap3,trap4,best} = e.data
+const {
+resultsCommon,
+resultsExtra,
+traps2,
+traps3,
+traps4,
+best
+} = e.data
 
-setResults(results)
+setCommonResults(resultsCommon || [])
+setExtraResults(resultsExtra || [])
 
-setTrap2(trap2)
-setTrap3(trap3)
-setTrap4(trap4)
+setTrap2(traps2 || [])
+setTrap3(traps3 || [])
+setTrap4(traps4 || [])
 
-setBest(best)
+setBest(best || [])
 
 }
 
-fetch("/words.txt")
-.then(r=>r.text())
-.then(text=>{
+async function loadDictionaries(){
 
-const words = text.split("\n")
+const commonText = await fetch("/alphawords.txt").then(r=>r.text())
+
+const commonWords = commonText
+.split("\n")
 .map(w=>w.trim())
 .filter(Boolean)
 
 worker.current.postMessage({
-type:"LOAD",
-payload:words
+type:"LOAD_COMMON",
+payload:commonWords
 })
 
-})
+const extraText = await fetch("/extra_words.txt").then(r=>r.text())
+
+const extraWords = extraText
+.split("\n")
+.map(w=>w.trim())
+.filter(Boolean)
+
+worker.current.postMessage({
+type:"LOAD_EXTRA",
+payload:extraWords)
+
+}
+
+loadDictionaries()
 
 },[])
 
@@ -69,7 +92,15 @@ return(
 
 <SearchBar onSearch={handleSearch}/>
 
-<WordList words={results}/>
+<h2>Common Words</h2>
+<WordList words={commonResults}/>
+
+{extraResults.length > 0 && (
+<>
+<h2>Uncommon Words</h2>
+<WordList words={extraResults}/>
+</>
+)}
 
 <TrapSection title="Best Traps" traps={best}/>
 <TrapSection title="2 Letter Traps" traps={trap2}/>
