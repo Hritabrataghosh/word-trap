@@ -60,11 +60,14 @@ function buildTraps(results,len){
 
   for(const [ending,list] of trapMap.entries()){
 
-    if(list.length <= 6){
+    // remove solutions equal to trap
+    const validSolutions = list.filter(w => w !== ending)
+
+    if(validSolutions.length > 0 && validSolutions.length <= 6){
 
       traps.push({
         ending,
-        solutions:list.slice(0,6)
+        solutions: validSolutions.slice(0,6)
       })
 
     }
