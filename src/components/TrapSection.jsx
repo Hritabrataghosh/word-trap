@@ -1,53 +1,88 @@
 import { useState, useEffect } from "react"
 
-export default function TrapSection({title,traps,reset}){
+export default function TrapSection({ title, traps = [], reset }) {
 
-const [open,setOpen] = useState(false)
+  const [open,setOpen] = useState(false)
 
-useEffect(()=>{
-  setOpen(false)
-},[reset])
+  // auto close when search changes
+  useEffect(()=>{
+    setOpen(false)
+  },[reset])
 
-return(
+  return (
 
-<div className="trap-section">
+    <div className="section">
 
-<div
-className="trap-header"
-onClick={()=>setOpen(!open)}
->
+      <div
+        className="section-header"
+        onClick={()=>setOpen(!open)}
+      >
 
-<span>{open ? "▼" : "▶"} {title}</span>
-<span>{traps.length} traps</span>
+        <span>{open ? "▼" : "▶"} {title}</span>
 
-</div>
+        <span className="count">
+          {traps.length} traps
+        </span>
 
-{open && (
+      </div>
 
-<div className="trap-grid">
+      {open && (
 
-{traps.map((t,i)=>(
-<div key={i} className="trap-item">
+        <div className="trap-grid">
 
-<span className="trap-ending">
-{t.ending} ({t.solutions.length}) →
-</span>
+          {traps.map((t,i)=>(
 
-{t.solutions.map((w,j)=>(
-<span key={j} className="trap-word">
-{w}
-</span>
-))}
+            <TrapRow key={i} trap={t}/>
 
-</div>
-))}
+          ))}
 
-</div>
+        </div>
 
-)}
+      )}
 
-</div>
+    </div>
 
-)
+  )
+}
 
+function TrapRow({trap}){
+
+  const [expand,setExpand] = useState(false)
+
+  const words = expand
+    ? trap.solutions
+    : trap.solutions.slice(0,3)
+
+  return(
+
+    <div className="trap-card">
+
+      <span className="trap-label">
+        {trap.ending} ({trap.solutions.length}) →
+      </span>
+
+      <div className="trap-words">
+
+        {words.map((w,i)=>(
+          <span key={i} className="word">
+            {w}
+          </span>
+        ))}
+
+        {!expand && trap.solutions.length > 3 && (
+
+          <span
+            className="more"
+            onClick={()=>setExpand(true)}
+          >
+            +{trap.solutions.length-3}
+          </span>
+
+        )}
+
+      </div>
+
+    </div>
+
+  )
 }
