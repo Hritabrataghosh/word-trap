@@ -4,33 +4,38 @@ export default function TrapSection({ title, traps = [] }) {
 
   return (
     <div className="section">
+
       <h2>{title}</h2>
 
-      {traps.map((t, i) => (
-        <TrapRow key={i} trap={t}/>
-      ))}
+      <div className="trap-grid">
+
+        {traps.map((t,i)=>(
+          <TrapRow key={i} trap={t}/>
+        ))}
+
+      </div>
 
     </div>
   )
 }
 
-function TrapRow({ trap }) {
+function TrapRow({trap}){
 
   const [open,setOpen] = useState(false)
 
-  const visible = open ? trap.solutions : trap.solutions.slice(0,3)
+  const words = open ? trap.solutions : trap.solutions.slice(0,3)
 
-  return (
+  return(
 
-    <div className="trap-row">
+    <div className="trap-card">
 
-      <span className="trap-ending">
+      <span className="trap-label">
         {trap.ending} ({trap.solutions.length}) →
       </span>
 
       <div className="trap-words">
 
-        {visible.map((w,i)=>(
+        {words.map((w,i)=>(
           <span key={i} className="word">{w}</span>
         ))}
 
@@ -39,7 +44,7 @@ function TrapRow({ trap }) {
             className="more"
             onClick={()=>setOpen(true)}
           >
-            +{trap.solutions.length - 3}
+            +{trap.solutions.length-3}
           </span>
         )}
 

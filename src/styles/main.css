@@ -134,3 +134,53 @@ font-size:12px;
   cursor:pointer;
   font-size:13px;
 }
+/* TRAP GRID */
+
+.trap-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:10px;
+}
+
+/* trap card */
+
+.trap-card{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:6px;
+  background:#0f172a;
+  padding:6px 8px;
+  border-radius:8px;
+}
+
+/* trap label */
+
+.trap-label{
+  background:#2db2e8;
+  padding:4px 8px;
+  border-radius:6px;
+  font-weight:600;
+}
+
+/* words */
+
+.trap-words{
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+
+.word{
+  background:#1e293b;
+  padding:3px 6px;
+  border-radius:5px;
+  font-size:13px;
+}
+
+.more{
+  background:#475569;
+  padding:3px 6px;
+  border-radius:5px;
+  cursor:pointer;
+}
