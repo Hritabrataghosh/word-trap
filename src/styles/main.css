@@ -66,3 +66,36 @@ font-size:12px;
 }
 
 }
+.trap-container{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.trap-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+
+.trap-ending{
+  background:#2db2e8;
+  padding:6px 10px;
+  border-radius:8px;
+  font-weight:bold;
+  white-space:nowrap;
+}
+
+.trap-words{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.word{
+  background:#1e293b;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:14px;
+}
