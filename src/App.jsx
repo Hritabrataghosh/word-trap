@@ -76,12 +76,16 @@ loadDictionaries()
 
 },[])
 
+const [searchVersion,setSearchVersion] = useState(0)
+
 function handleSearch(q){
 
-worker.current.postMessage({
-type:"SEARCH",
-payload:q.toLowerCase()
-})
+  setSearchVersion(v => v + 1)
+
+  worker.current.postMessage({
+    type:"SEARCH",
+    payload:q.toLowerCase()
+  })
 
 }
 
@@ -103,10 +107,10 @@ return(
 </>
 )}
 
-<TrapSection title="Best Traps" traps={best}/>
-<TrapSection title="2 Letter Traps" traps={trap2}/>
-<TrapSection title="3 Letter Traps" traps={trap3}/>
-<TrapSection title="4 Letter Traps" traps={trap4}/>
+<TrapSection title="Best Traps" traps={best} reset={searchVersion}/>
+<TrapSection title="2 Letter Traps" traps={trap2} reset={searchVersion}/>
+<TrapSection title="3 Letter Traps" traps={trap3} reset={searchVersion}/>
+<TrapSection title="4 Letter Traps" traps={trap4} reset={searchVersion}/>
 
 </div>
 
