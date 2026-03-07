@@ -31,28 +31,25 @@ function search(prefix){
 
 }
 
-function buildTraps(results,len,prefix){
+function buildTraps(results,len){
 
   const traps = {}
 
-  for(let w of results){
+  for(const word of results){
 
-    if(w.length <= len) continue
+    if(word.length <= len) continue
 
-    const end = w.slice(-len)
+    const ending = word.slice(-len)
 
-    const next = prefixMap[end] || []
+    const next = results.filter(w => w.startsWith(ending))
 
-    // keep only valid continuation words
-    const filtered = next.filter(x => x.startsWith(prefix))
-
-    const count = filtered.length
+    const count = next.length
 
     if(count > 0 && count <= 6){
 
-      if(!traps[end]){
+      if(!traps[ending]){
 
-        traps[end] = filtered.slice(0,6)
+        traps[ending] = next.slice(0,6)
 
       }
 
