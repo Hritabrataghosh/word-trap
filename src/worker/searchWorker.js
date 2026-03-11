@@ -3,78 +3,27 @@ let extraWords = []
 
 let commonWordSet = new Set()
 
+const commonIndex = new Map()
+const extraIndex = new Map()
+const allIndex = new Map()
+
 const trapCache = new Map()
 
-class TrieNode{
-  constructor(){
-    this.children = {}
-    this.words = []
-  }
-}
-
-const commonTrie = new TrieNode()
-const extraTrie = new TrieNode()
-const allTrie = new TrieNode()
-
-function insertWord(root,word){
-
-  let node = root
-
-  for(const c of word){
-
-    if(!node.children[c]){
-      node.children[c] = new TrieNode()
-    }
-
-    node = node.children[c]
-
-    node.words.push(word)
-
-  }
-
-}
-
-function buildTrie(words,root){
+function buildIndex(words,map){
 
   for(const w of words){
-    insertWord(root,w)
-  }
 
-}
+    const limit = Math.min(4,w.length)
 
-function searchTrie(root,prefix){
+    for(let i=1;i<=limit;i++){
 
-  let node = root
+      const p = w.slice(0,i)
 
-  for(const c of prefix){
+      if(!map.has(p)){
+        map.set(p,[])
+      }
 
-    if(!node.children[c]){
-      return []
-    }
-
-    node = node.children[c]
-
-  }
-
-  return node.words
-
-}
-
-function mergeTrieWords(root){
-
-  const stack = [root]
-
-  while(stack.length){
-
-    const node = stack.pop()
-
-    for(const c in node.children){
-
-      const child = node.children[c]
-
-      child.words = [...child.words]
-
-      stack.push(child)
+      map.get(p).push(w)
 
     }
 
@@ -82,19 +31,55 @@ function mergeTrieWords(root){
 
 }
 
-function getResponses(trap,trie){
+function mergeIndexes(){
 
-  const list = searchTrie(trie,trap)
+  for(const [k,v] of commonIndex){
+
+    if(!allIndex.has(k)){
+      allIndex.set(k,[])
+    }
+
+    allIndex.get(k).push(...v)
+
+  }
+
+  for(const [k,v] of extraIndex){
+
+    if(!allIndex.has(k)){
+      allIndex.set(k,[])
+    }
+
+    allIndex.get(k).push(...v)
+
+  }
+
+}
+
+function search(prefix){
+
+  const common = commonIndex.get(prefix) || []
+  const extra = extraIndex.get(prefix) || []
+
+  return { common, extra }
+
+}
+
+function getResponses(trap,index){
+
+  const list = index.get(trap) || []
 
   const responses = []
 
+  const s = trap+"s"
+  const es = trap+"es"
+
+  const pluralExists =
+    commonWordSet.has(s) ||
+    commonWordSet.has(es)
+
   for(const w of list){
 
-    if(
-      w !== trap &&
-      !commonWordSet.has(trap+"s") &&
-      !commonWordSet.has(trap+"es")
-    ){
+    if(w !== trap && !pluralExists){
       responses.push(w)
     }
 
@@ -104,15 +89,15 @@ function getResponses(trap,trie){
 
 }
 
-function buildTraps(prefix,len,trie){
+function buildTraps(prefix,len,index){
 
-  const cacheKey = prefix+"-"+len
+  const cacheKey = prefix+"-"+len+"-"+(index===allIndex?"all":"common")
 
   if(trapCache.has(cacheKey)){
     return trapCache.get(cacheKey)
   }
 
-  const playable = searchTrie(trie,prefix)
+  const playable = index.get(prefix) || []
 
   const trapMap = new Map()
 
@@ -122,7 +107,7 @@ function buildTraps(prefix,len,trie){
 
     const trap = word.slice(-len)
 
-    const responses = getResponses(trap,trie)
+    const responses = getResponses(trap,index)
 
     if(responses.length > 0 && responses.length <= 7){
 
@@ -139,6 +124,8 @@ function buildTraps(prefix,len,trie){
       trapMap.get(trap).plays.push(word)
 
     }
+
+    if(trapMap.size > 30) break
 
   }
 
@@ -157,11 +144,9 @@ self.onmessage = e =>{
   if(type==="LOAD_COMMON"){
 
     commonWords = payload
-
     commonWordSet = new Set(commonWords)
 
-    buildTrie(commonWords,commonTrie)
-    buildTrie(commonWords,allTrie)
+    buildIndex(commonWords,commonIndex)
 
     return
 
@@ -171,10 +156,9 @@ self.onmessage = e =>{
 
     extraWords = payload
 
-    buildTrie(extraWords,extraTrie)
-    buildTrie(extraWords,allTrie)
+    buildIndex(extraWords,extraIndex)
 
-    mergeTrieWords(allTrie)
+    mergeIndexes()
 
     return
 
@@ -184,8 +168,7 @@ self.onmessage = e =>{
 
     const prefix = payload
 
-    const common = searchTrie(commonTrie,prefix)
-    const extra = searchTrie(extraTrie,prefix)
+    const {common,extra} = search(prefix)
 
     const resultsCommon = common.slice(0,30)
 
@@ -195,14 +178,14 @@ self.onmessage = e =>{
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    const traps2 = buildTraps(prefix,2,commonTrie).slice(0,10)
-    const traps3 = buildTraps(prefix,3,commonTrie).slice(0,10)
-    const traps4 = buildTraps(prefix,4,commonTrie).slice(0,10)
+    const traps2 = buildTraps(prefix,2,commonIndex).slice(0,10)
+    const traps3 = buildTraps(prefix,3,commonIndex).slice(0,10)
+    const traps4 = buildTraps(prefix,4,commonIndex).slice(0,10)
 
     const best = [
-      ...buildTraps(prefix,2,allTrie),
-      ...buildTraps(prefix,3,allTrie),
-      ...buildTraps(prefix,4,allTrie)
+      ...buildTraps(prefix,2,allIndex),
+      ...buildTraps(prefix,3,allIndex),
+      ...buildTraps(prefix,4,allIndex)
     ]
     .filter(t => t.solutions.length <= 2)
     .sort((a,b)=>a.solutions.length-b.solutions.length)
