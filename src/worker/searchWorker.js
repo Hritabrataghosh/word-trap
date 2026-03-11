@@ -38,7 +38,7 @@ function search(prefix){
 
 }
 
-function buildTraps(results,len){
+function buildTraps(results,len,limit){
 
   const trapMap = new Map()
 
@@ -60,14 +60,13 @@ function buildTraps(results,len){
 
   for(const [ending,list] of trapMap.entries()){
 
-    // remove solutions equal to trap
-    const validSolutions = list.filter(w => w !== ending)
+    const valid = list.filter(w => w !== ending)
 
-    if(validSolutions.length > 0 && validSolutions.length <= 6){
+    if(valid.length > 0 && valid.length <= limit){
 
       traps.push({
         ending,
-        solutions: validSolutions.slice(0,6)
+        solutions: valid.slice(0,6)
       })
 
     }
@@ -112,25 +111,31 @@ self.onmessage = e =>{
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    const traps2 = buildTraps(common,2)
-    const traps3 = buildTraps(common,3)
-    const traps4 = buildTraps(common,4)
+    const traps2 = buildTraps(common,2,7)
+const traps3 = buildTraps(common,3,7)
+const traps4 = buildTraps(common,4,7)
 
-    const best = [...traps2,...traps3,...traps4]
-      .sort((a,b)=>a.solutions.length-b.solutions.length)
-      .slice(0,20)
+const best = [...traps2,...traps3,...traps4]
+  .filter(t => t.solutions.length <= 2)
+  .sort((a,b)=>a.solutions.length-b.solutions.length)
+  .slice(0,20)
+
+const actual2 = traps2.slice(0,10)
+const actual3 = traps3.slice(0,10)
+const actual4 = traps4.slice(0,10)
 
     postMessage({
 
-      resultsCommon,
-      resultsExtra,
-      traps2,
-      traps3,
-      traps4,
-      best
+  resultsCommon,
+  resultsExtra,
 
-    })
+  best,
 
+  traps2: actual2,
+  traps3: actual3,
+  traps4: actual4
+
+})
   }
 
 }
