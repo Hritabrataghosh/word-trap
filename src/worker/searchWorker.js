@@ -39,10 +39,12 @@ function buildTraps(prefix,len){
 
   const trapMap = new Map()
 
-  for(const w of commonWords){
+  // only words that start with the search prefix
+  const playableWords = commonIndex.get(prefix) || []
 
-    if(!w.startsWith(prefix)) continue
-    if(w.length <= len) continue
+  for(const w of playableWords){
+
+    if(w.length <= prefix.length + len) continue
 
     const end = w.slice(-len)
 
@@ -58,7 +60,6 @@ function buildTraps(prefix,len){
 
   for(const [ending,list] of trapMap.entries()){
 
-    // find all dictionary words that start with trap ending
     const responses = commonIndex.get(ending) || []
 
     const valid = responses.filter(w => w !== ending)
