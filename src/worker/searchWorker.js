@@ -37,37 +37,25 @@ function search(prefix){
 
 function buildTraps(prefix,len){
 
-  const playableWords = commonIndex.get(prefix) || []
-
-  const trapMap = new Map()
-
-  for(const word of playableWords){
-
-    if(word.length <= prefix.length + len) continue
-
-    const ending = word.slice(-len)
-
-    if(!trapMap.has(ending)){
-      trapMap.set(ending,[])
-    }
-
-    trapMap.get(ending).push(word)
-
-  }
+  const playable = commonIndex.get(prefix) || []
 
   const traps = []
 
-  for(const [ending] of trapMap.entries()){
+  for(const word of playable){
 
-    const responses = commonIndex.get(ending) || []
+    if(word.length <= prefix.length + len) continue
 
-    const validResponses = responses.filter(w => w !== ending)
+    const trap = word.slice(-len)
 
-    if(validResponses.length > 0 && validResponses.length <= 7){
+    const responses = commonIndex.get(trap) || []
+
+    const valid = responses.filter(w => w !== trap)
+
+    if(valid.length > 0 && valid.length <= 7){
 
       traps.push({
-        ending,
-        solutions: validResponses.slice(0,6)
+        ending: trap,
+        solutions: valid.slice(0,6)
       })
 
     }
@@ -125,7 +113,6 @@ self.onmessage = e =>{
 
       resultsCommon,
       resultsExtra,
-
       traps2,
       traps3,
       traps4,
