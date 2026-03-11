@@ -38,7 +38,7 @@ function search(prefix){
 
 }
 
-function buildTraps(results,len,limit){
+function buildTraps(results,len){
 
   const trapMap = new Map()
 
@@ -62,11 +62,11 @@ function buildTraps(results,len,limit){
 
     const valid = list.filter(w => w !== ending)
 
-    if(valid.length > 0 && valid.length <= limit){
+    if(valid.length > 0 && valid.length <= 7){
 
       traps.push({
         ending,
-        solutions: valid.slice(0,6)
+        solutions: valid
       })
 
     }
@@ -111,9 +111,9 @@ self.onmessage = e =>{
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    const traps2 = buildTraps(common,2,7)
-const traps3 = buildTraps(common,3,7)
-const traps4 = buildTraps(common,4,7)
+    const traps2 = buildTraps(common,2).slice(0,10)
+const traps3 = buildTraps(common,3).slice(0,10)
+const traps4 = buildTraps(common,4).slice(0,10)
 
 const best = [...traps2,...traps3,...traps4]
   .filter(t => t.solutions.length <= 2)

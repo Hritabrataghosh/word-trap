@@ -1,24 +1,16 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
-export default function TrapSection({ title, traps = [], reset }) {
+export default function TrapSection({ title, traps = [] }) {
 
-  const [open,setOpen] = useState(false)
+  if(traps.length === 0) return null
 
-  // auto close when search changes
-  useEffect(()=>{
-    setOpen(false)
-  },[reset])
-
-  return (
+  return(
 
     <div className="section">
 
-      <div
-        className="section-header"
-        onClick={()=>setOpen(!open)}
-      >
+      <div className="section-header">
 
-        <span>{open ? "▼" : "▶"} {title}</span>
+        <span>{title}</span>
 
         <span className="count">
           {traps.length} traps
@@ -26,23 +18,18 @@ export default function TrapSection({ title, traps = [], reset }) {
 
       </div>
 
-      {open && (
+      <div className="trap-grid">
 
-        <div className="trap-grid">
+        {traps.map((t,i)=>(
+          <TrapRow key={i} trap={t}/>
+        ))}
 
-          {traps.map((t,i)=>(
-
-            <TrapRow key={i} trap={t}/>
-
-          ))}
-
-        </div>
-
-      )}
+      </div>
 
     </div>
 
   )
+
 }
 
 function TrapRow({trap}){
@@ -85,4 +72,5 @@ function TrapRow({trap}){
     </div>
 
   )
+
 }
