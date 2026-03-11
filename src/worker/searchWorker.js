@@ -3,6 +3,7 @@ let extraWords = []
 
 const commonIndex = new Map()
 const extraIndex = new Map()
+const allIndex = new Map()
 
 function buildIndex(words,map){
 
@@ -26,6 +27,30 @@ function buildIndex(words,map){
 
 }
 
+function mergeIndexes(){
+
+  for(const [k,v] of commonIndex){
+
+    if(!allIndex.has(k)){
+      allIndex.set(k,[])
+    }
+
+    allIndex.get(k).push(...v)
+
+  }
+
+  for(const [k,v] of extraIndex){
+
+    if(!allIndex.has(k)){
+      allIndex.set(k,[])
+    }
+
+    allIndex.get(k).push(...v)
+
+  }
+
+}
+
 function search(prefix){
 
   const common = commonIndex.get(prefix) || []
@@ -35,17 +60,17 @@ function search(prefix){
 
 }
 
-function getResponses(trap){
+function getResponses(trap,index){
 
-  const list = commonIndex.get(trap) || []
+  const list = index.get(trap) || []
 
   return list.filter(w => w !== trap)
 
 }
 
-function buildTraps(prefix,len){
+function buildTraps(prefix,len,index){
 
-  const playable = commonIndex.get(prefix) || []
+  const playable = index.get(prefix) || []
 
   const trapMap = new Map()
 
@@ -55,7 +80,7 @@ function buildTraps(prefix,len){
 
     const trap = word.slice(-len)
 
-    const responses = getResponses(trap)
+    const responses = getResponses(trap,index)
 
     if(responses.length > 0 && responses.length <= 7){
 
@@ -63,8 +88,8 @@ function buildTraps(prefix,len){
 
         trapMap.set(trap,{
           ending: trap,
-          solutions: [],
-          plays: []
+          solutions: responses.slice(0,6),
+          plays:[]
         })
 
       }
@@ -75,21 +100,7 @@ function buildTraps(prefix,len){
 
   }
 
-  const traps = []
-
-  for(const [trap,data] of trapMap){
-
-    const responses = getResponses(trap)
-
-    traps.push({
-      ending: trap,
-      solutions: responses.slice(0,6),
-      plays: data.plays.slice(0,6)
-    })
-
-  }
-
-  return traps
+  return Array.from(trapMap.values())
 
 }
 
@@ -109,6 +120,9 @@ self.onmessage = e =>{
 
     extraWords = payload
     buildIndex(extraWords,extraIndex)
+
+    mergeIndexes()
+
     return
 
   }
@@ -127,14 +141,18 @@ self.onmessage = e =>{
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    const traps2 = buildTraps(prefix,2).slice(0,10)
-    const traps3 = buildTraps(prefix,3).slice(0,10)
-    const traps4 = buildTraps(prefix,4).slice(0,10)
+    const traps2 = buildTraps(prefix,2,commonIndex).slice(0,10)
+    const traps3 = buildTraps(prefix,3,commonIndex).slice(0,10)
+    const traps4 = buildTraps(prefix,4,commonIndex).slice(0,10)
 
-    const best = [...traps2,...traps3,...traps4]
-      .filter(t => t.solutions.length <= 2)
-      .sort((a,b)=>a.solutions.length-b.solutions.length)
-      .slice(0,20)
+    const best = [
+      ...buildTraps(prefix,2,allIndex),
+      ...buildTraps(prefix,3,allIndex),
+      ...buildTraps(prefix,4,allIndex)
+    ]
+    .filter(t => t.solutions.length <= 2)
+    .sort((a,b)=>a.solutions.length-b.solutions.length)
+    .slice(0,20)
 
     postMessage({
 
