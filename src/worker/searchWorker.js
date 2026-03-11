@@ -31,19 +31,17 @@ function search(prefix){
   const common = commonIndex.get(prefix) || []
   const extra = extraIndex.get(prefix) || []
 
-  return {
-    common,
-    extra
-  }
+  return { common, extra }
 
 }
 
-function buildTraps(results,len){
+function buildTraps(prefix,len){
 
   const trapMap = new Map()
 
-  for(const w of results){
+  for(const w of commonWords){
 
+    if(!w.startsWith(prefix)) continue
     if(w.length <= len) continue
 
     const end = w.slice(-len)
@@ -60,13 +58,16 @@ function buildTraps(results,len){
 
   for(const [ending,list] of trapMap.entries()){
 
-    const valid = list.filter(w => w !== ending)
+    // find all dictionary words that start with trap ending
+    const responses = commonIndex.get(ending) || []
+
+    const valid = responses.filter(w => w !== ending)
 
     if(valid.length > 0 && valid.length <= 7){
 
       traps.push({
         ending,
-        solutions: valid
+        solutions: valid.slice(0,6)
       })
 
     }
@@ -85,7 +86,6 @@ self.onmessage = e =>{
 
     commonWords = payload
     buildIndex(commonWords,commonIndex)
-
     return
 
   }
@@ -94,14 +94,15 @@ self.onmessage = e =>{
 
     extraWords = payload
     buildIndex(extraWords,extraIndex)
-
     return
 
   }
 
   if(type==="SEARCH"){
 
-    const {common,extra} = search(payload)
+    const prefix = payload
+
+    const {common,extra} = search(prefix)
 
     const resultsCommon = common.slice(0,30)
 
@@ -111,31 +112,27 @@ self.onmessage = e =>{
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    const traps2 = buildTraps(common,2).slice(0,10)
-const traps3 = buildTraps(common,3).slice(0,10)
-const traps4 = buildTraps(common,4).slice(0,10)
+    const traps2 = buildTraps(prefix,2).slice(0,10)
+    const traps3 = buildTraps(prefix,3).slice(0,10)
+    const traps4 = buildTraps(prefix,4).slice(0,10)
 
-const best = [...traps2,...traps3,...traps4]
-  .filter(t => t.solutions.length <= 2)
-  .sort((a,b)=>a.solutions.length-b.solutions.length)
-  .slice(0,20)
-
-const actual2 = traps2.slice(0,10)
-const actual3 = traps3.slice(0,10)
-const actual4 = traps4.slice(0,10)
+    const best = [...traps2,...traps3,...traps4]
+      .filter(t => t.solutions.length <= 2)
+      .sort((a,b)=>a.solutions.length-b.solutions.length)
+      .slice(0,20)
 
     postMessage({
 
-  resultsCommon,
-  resultsExtra,
+      resultsCommon,
+      resultsExtra,
 
-  best,
+      traps2,
+      traps3,
+      traps4,
+      best
 
-  traps2: actual2,
-  traps3: actual3,
-  traps4: actual4
+    })
 
-})
   }
 
 }
