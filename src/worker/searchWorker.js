@@ -35,15 +35,11 @@ function search(prefix){
 
 }
 
-function getResponses(prefix){
+function getResponses(trap){
 
-  const responses = []
+  const list = commonIndex.get(trap) || []
 
-  for(const w of commonWords){
-    if(w.startsWith(prefix)) responses.push(w)
-  }
-
-  return responses
+  return list.filter(w => w !== trap)
 
 }
 
@@ -51,7 +47,7 @@ function buildTraps(prefix,len){
 
   const playable = commonIndex.get(prefix) || []
 
-  const traps = []
+  const trapMap = new Map()
 
   for(const word of playable){
 
@@ -59,22 +55,22 @@ function buildTraps(prefix,len){
 
     const trap = word.slice(-len)
 
+    if(trapMap.has(trap)) continue
+
     const responses = getResponses(trap)
 
-    const valid = responses.filter(w => w !== trap)
+    if(responses.length > 0 && responses.length <= 7){
 
-    if(valid.length > 0 && valid.length <= 7){
-
-      traps.push({
+      trapMap.set(trap,{
         ending: trap,
-        solutions: valid.slice(0,6)
+        solutions: responses.slice(0,6)
       })
 
     }
 
   }
 
-  return traps
+  return Array.from(trapMap.values())
 
 }
 
