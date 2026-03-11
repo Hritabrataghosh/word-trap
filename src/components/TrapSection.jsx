@@ -37,15 +37,15 @@ function TrapRow({trap}){
   const [expand,setExpand] = useState(false)
 
   const words = expand
-    ? trap.solutions
-    : trap.solutions.slice(0,3)
+  ? trap.plays
+  : trap.plays.slice(0,3)
 
   return(
 
     <div className="trap-card">
 
       <span className="trap-label">
-        {trap.ending} ({trap.solutions.length}) →
+        {trap.ending} ({trap.plays.length}) →
       </span>
 
       <div className="trap-words">

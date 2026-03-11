@@ -55,22 +55,41 @@ function buildTraps(prefix,len){
 
     const trap = word.slice(-len)
 
-    if(trapMap.has(trap)) continue
-
     const responses = getResponses(trap)
 
     if(responses.length > 0 && responses.length <= 7){
 
-      trapMap.set(trap,{
-        ending: trap,
-        solutions: responses.slice(0,6)
-      })
+      if(!trapMap.has(trap)){
+
+        trapMap.set(trap,{
+          ending: trap,
+          solutions: [],
+          plays: []
+        })
+
+      }
+
+      trapMap.get(trap).plays.push(word)
 
     }
 
   }
 
-  return Array.from(trapMap.values())
+  const traps = []
+
+  for(const [trap,data] of trapMap){
+
+    const responses = getResponses(trap)
+
+    traps.push({
+      ending: trap,
+      solutions: responses.slice(0,6),
+      plays: data.plays.slice(0,6)
+    })
+
+  }
+
+  return traps
 
 }
 
