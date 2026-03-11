@@ -64,10 +64,15 @@ function getResponses(trap,index){
 
   const list = index.get(trap) || []
 
-  return list.filter(w => w !== trap)
+  const invalidForms = new Set([
+    trap,
+    trap + "s",
+    trap + "es"
+  ])
+
+  return list.filter(w => !invalidForms.has(w))
 
 }
-
 function buildTraps(prefix,len,index){
 
   const playable = index.get(prefix) || []
