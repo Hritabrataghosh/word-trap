@@ -1,9 +1,13 @@
 let commonWords = []
 let extraWords = []
 
+let commonWordSet = new Set()
+
 const commonIndex = new Map()
 const extraIndex = new Map()
 const allIndex = new Map()
+
+const trapCache = new Map()
 
 function buildIndex(words,map){
 
@@ -64,16 +68,31 @@ function getResponses(trap,index){
 
   const list = index.get(trap) || []
 
-  const invalidForms = new Set([
-    trap,
-    trap + "s",
-    trap + "es"
-  ])
+  const responses = []
 
-  return list.filter(w => !invalidForms.has(w))
+  for(const w of list){
+
+    if(
+      w !== trap &&
+      !commonWordSet.has(trap+"s") &&
+      !commonWordSet.has(trap+"es")
+    ){
+      responses.push(w)
+    }
+
+  }
+
+  return responses
 
 }
+
 function buildTraps(prefix,len,index){
+
+  const cacheKey = prefix+"-"+len+"-"+(index===allIndex?"all":"common")
+
+  if(trapCache.has(cacheKey)){
+    return trapCache.get(cacheKey)
+  }
 
   const playable = index.get(prefix) || []
 
@@ -105,7 +124,11 @@ function buildTraps(prefix,len,index){
 
   }
 
-  return Array.from(trapMap.values())
+  const traps = Array.from(trapMap.values())
+
+  trapCache.set(cacheKey,traps)
+
+  return traps
 
 }
 
@@ -116,7 +139,10 @@ self.onmessage = e =>{
   if(type==="LOAD_COMMON"){
 
     commonWords = payload
+    commonWordSet = new Set(commonWords)
+
     buildIndex(commonWords,commonIndex)
+
     return
 
   }
@@ -124,6 +150,7 @@ self.onmessage = e =>{
   if(type==="LOAD_EXTRA"){
 
     extraWords = payload
+
     buildIndex(extraWords,extraIndex)
 
     mergeIndexes()
