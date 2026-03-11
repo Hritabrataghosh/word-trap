@@ -37,38 +37,37 @@ function search(prefix){
 
 function buildTraps(prefix,len){
 
-  const trapMap = new Map()
-
-  // only words that start with the search prefix
   const playableWords = commonIndex.get(prefix) || []
 
-  for(const w of playableWords){
+  const trapMap = new Map()
 
-    if(w.length <= prefix.length + len) continue
+  for(const word of playableWords){
 
-    const end = w.slice(-len)
+    if(word.length <= prefix.length + len) continue
 
-    if(!trapMap.has(end)){
-      trapMap.set(end,[])
+    const ending = word.slice(-len)
+
+    if(!trapMap.has(ending)){
+      trapMap.set(ending,[])
     }
 
-    trapMap.get(end).push(w)
+    trapMap.get(ending).push(word)
 
   }
 
   const traps = []
 
-  for(const [ending,list] of trapMap.entries()){
+  for(const [ending] of trapMap.entries()){
 
     const responses = commonIndex.get(ending) || []
 
-    const valid = responses.filter(w => w !== ending)
+    const validResponses = responses.filter(w => w !== ending)
 
-    if(valid.length > 0 && valid.length <= 7){
+    if(validResponses.length > 0 && validResponses.length <= 7){
 
       traps.push({
         ending,
-        solutions: valid.slice(0,6)
+        solutions: validResponses.slice(0,6)
       })
 
     }
