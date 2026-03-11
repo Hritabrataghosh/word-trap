@@ -35,6 +35,18 @@ function search(prefix){
 
 }
 
+function getResponses(prefix){
+
+  const responses = []
+
+  for(const w of commonWords){
+    if(w.startsWith(prefix)) responses.push(w)
+  }
+
+  return responses
+
+}
+
 function buildTraps(prefix,len){
 
   const playable = commonIndex.get(prefix) || []
@@ -47,7 +59,7 @@ function buildTraps(prefix,len){
 
     const trap = word.slice(-len)
 
-    const responses = commonIndex.get(trap) || []
+    const responses = getResponses(trap)
 
     const valid = responses.filter(w => w !== trap)
 
