@@ -79,7 +79,12 @@ function getResponses(trap,index){
 
   for(const w of list){
 
-    if(w !== trap && !pluralExists){
+    // NEW RULE: must be at least +3 length
+    if(
+      w !== trap &&
+      !pluralExists &&
+      w.length >= trap.length + 3
+    ){
       responses.push(w)
     }
 
@@ -178,12 +183,13 @@ self.onmessage = e =>{
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    const traps2 = buildTraps(prefix,2,commonIndex).slice(0,10)
+    // ❌ REMOVED traps2
+
     const traps3 = buildTraps(prefix,3,commonIndex).slice(0,10)
     const traps4 = buildTraps(prefix,4,commonIndex).slice(0,10)
 
+    // ❌ BEST WITHOUT 2-letter traps
     const best = [
-      ...buildTraps(prefix,2,allIndex),
       ...buildTraps(prefix,3,allIndex),
       ...buildTraps(prefix,4,allIndex)
     ]
@@ -195,7 +201,6 @@ self.onmessage = e =>{
 
       resultsCommon,
       resultsExtra,
-      traps2,
       traps3,
       traps4,
       best
