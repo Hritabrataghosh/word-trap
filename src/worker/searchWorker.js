@@ -9,6 +9,7 @@ const allIndex = new Map()
 
 const trapCache = new Map()
 
+// 🔹 BUILD INDEX (prefix up to 4 letters)
 function buildIndex(words,map){
 
   for(const w of words){
@@ -31,6 +32,7 @@ function buildIndex(words,map){
 
 }
 
+// 🔹 MERGE INDEXES
 function mergeIndexes(){
 
   for(const [k,v] of commonIndex){
@@ -55,6 +57,7 @@ function mergeIndexes(){
 
 }
 
+// 🔹 SEARCH
 function search(prefix){
 
   const common = commonIndex.get(prefix) || []
@@ -64,27 +67,38 @@ function search(prefix){
 
 }
 
+// 🔥 STRICT VALIDATION (THIS FIXES YOUR BUG)
+function isValidTrap(trap){
+
+  const minLen = trap.length + 3
+
+  for(const w of commonWords){
+
+    if(w.startsWith(trap)){
+
+      // ❌ ANY short word → reject trap completely
+      if(w.length < minLen){
+        return false
+      }
+
+    }
+
+  }
+
+  return true
+
+}
+
+// 🔹 GET VALID RESPONSES
 function getResponses(trap,index){
 
   const list = index.get(trap) || []
 
   const responses = []
 
-  const s = trap+"s"
-  const es = trap+"es"
-
-  const pluralExists =
-    commonWordSet.has(s) ||
-    commonWordSet.has(es)
-
   for(const w of list){
 
-    // NEW RULE: must be at least +3 length
-    if(
-      w !== trap &&
-      !pluralExists &&
-      w.length >= trap.length + 3
-    ){
+    if(w !== trap && w.length >= trap.length + 3){
       responses.push(w)
     }
 
@@ -94,6 +108,7 @@ function getResponses(trap,index){
 
 }
 
+// 🔹 BUILD TRAPS
 function buildTraps(prefix,len,index){
 
   const cacheKey = prefix+"-"+len+"-"+(index===allIndex?"all":"common")
@@ -111,6 +126,9 @@ function buildTraps(prefix,len,index){
     if(word.length <= prefix.length + len) continue
 
     const trap = word.slice(-len)
+
+    // 🔥 CRITICAL FIX
+    if(!isValidTrap(trap)) continue
 
     const responses = getResponses(trap,index)
 
@@ -142,6 +160,7 @@ function buildTraps(prefix,len,index){
 
 }
 
+// 🔹 WORKER HANDLER
 self.onmessage = e =>{
 
   const {type,payload} = e.data
@@ -183,12 +202,11 @@ self.onmessage = e =>{
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    // ❌ REMOVED traps2
+    // ❌ NO 2 LETTER TRAPS
 
     const traps3 = buildTraps(prefix,3,commonIndex).slice(0,10)
     const traps4 = buildTraps(prefix,4,commonIndex).slice(0,10)
 
-    // ❌ BEST WITHOUT 2-letter traps
     const best = [
       ...buildTraps(prefix,3,allIndex),
       ...buildTraps(prefix,4,allIndex)
