@@ -47,9 +47,9 @@ export default function App(){
       setBest(best || [])
       setSpammable(spammable || [])
 
-      // 🔥 AUTO PICK MOVES
-      setBestMove(best?.[0] || null)
-      setSpamMove(spammable?.[0] || null)
+      // 🔥 PICK BEST PLAY WORD (not just trap)
+      setBestMove(best?.[0]?.plays?.[0] || null)
+      setSpamMove(spammable?.[0]?.plays?.[0] || null)
 
     }
 
@@ -87,30 +87,41 @@ export default function App(){
 
   }
 
+  // 🔹 COPY HELPER
+  function copy(text){
+    navigator.clipboard.writeText(text)
+  }
+
   return(
 
     <div className="app">
 
       <h1>Word Trap Solver</h1>
 
-      <SearchBar onSearch={handleSearch}/>
-
-      {/* 🔥 QUICK ACTION PANEL */}
-      <div className="quick-panel">
+      {/* 🔥 TOP ACTION BAR */}
+      <div className="quick-panel-top">
 
         {bestMove && (
-          <button className="best-btn">
-            🧨 Best Trap: {bestMove.ending}
+          <button
+            className="best-btn"
+            onClick={()=>copy(bestMove)}
+          >
+            🧨 Best: {bestMove}
           </button>
         )}
 
         {spamMove && (
-          <button className="spam-btn">
-            🔁 Spam Trap: {spamMove.ending}
+          <button
+            className="spam-btn"
+            onClick={()=>copy(spamMove)}
+          >
+            🔁 Spam: {spamMove}
           </button>
         )}
 
       </div>
+
+      <SearchBar onSearch={handleSearch}/>
 
       {/* WORDS */}
       <h2>Common Words</h2>

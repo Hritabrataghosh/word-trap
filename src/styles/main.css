@@ -324,3 +324,37 @@ font-size:13px;
 .spam-btn:hover{
   background:#0099cc;
 }
+.quick-panel-top{
+  display:flex;
+  gap:10px;
+  margin-bottom:10px;
+  flex-wrap:wrap;
+}
+
+.best-btn{
+  background:#ff4d4d;
+  color:white;
+  border:none;
+  padding:10px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.spam-btn{
+  background:#00c2ff;
+  color:white;
+  border:none;
+  padding:10px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.best-btn:hover{
+  background:#ff1a1a;
+}
+
+.spam-btn:hover{
+  background:#0099cc;
+}
