@@ -9,7 +9,7 @@ const allIndex = new Map()
 
 const trapCache = new Map()
 
-// 🔹 BUILD INDEX (prefix up to 4 letters)
+// 🔹 BUILD INDEX (FAST PREFIX MAP)
 function buildIndex(words,map){
 
   for(const w of words){
@@ -36,69 +36,50 @@ function buildIndex(words,map){
 function mergeIndexes(){
 
   for(const [k,v] of commonIndex){
-
-    if(!allIndex.has(k)){
-      allIndex.set(k,[])
-    }
-
+    if(!allIndex.has(k)) allIndex.set(k,[])
     allIndex.get(k).push(...v)
-
   }
 
   for(const [k,v] of extraIndex){
-
-    if(!allIndex.has(k)){
-      allIndex.set(k,[])
-    }
-
+    if(!allIndex.has(k)) allIndex.set(k,[])
     allIndex.get(k).push(...v)
-
   }
 
 }
 
 // 🔹 SEARCH
 function search(prefix){
-
-  const common = commonIndex.get(prefix) || []
-  const extra = extraIndex.get(prefix) || []
-
-  return { common, extra }
-
+  return {
+    common: commonIndex.get(prefix) || [],
+    extra: extraIndex.get(prefix) || []
+  }
 }
 
-// 🔥 STRICT VALIDATION (THIS FIXES YOUR BUG)
-function isValidTrap(trap){
+// 🔥 FAST VALIDATION (NO FULL SCAN)
+function isValidTrap(trap,index){
 
+  const list = index.get(trap) || []
   const minLen = trap.length + 3
 
-  for(const w of commonWords){
-
-    if(w.startsWith(trap)){
-
-      // ❌ ANY short word → reject trap completely
-      if(w.length < minLen){
-        return false
-      }
-
+  for(const w of list){
+    if(w.length < minLen){
+      return false
     }
-
   }
 
   return true
-
 }
 
-// 🔹 GET VALID RESPONSES
+// 🔹 GET RESPONSES
 function getResponses(trap,index){
 
   const list = index.get(trap) || []
-
   const responses = []
+  const minLen = trap.length + 3
 
   for(const w of list){
 
-    if(w !== trap && w.length >= trap.length + 3){
+    if(w !== trap && w.length >= minLen){
       responses.push(w)
     }
 
@@ -118,7 +99,6 @@ function buildTraps(prefix,len,index){
   }
 
   const playable = index.get(prefix) || []
-
   const trapMap = new Map()
 
   for(const word of playable){
@@ -127,18 +107,18 @@ function buildTraps(prefix,len,index){
 
     const trap = word.slice(-len)
 
-    // 🔥 CRITICAL FIX
-    if(!isValidTrap(trap)) continue
+    // 🔥 STRICT VALIDATION
+    if(!isValidTrap(trap,index)) continue
 
     const responses = getResponses(trap,index)
 
-    if(responses.length > 0 && responses.length <= 7){
+    if(responses.length > 0){
 
       if(!trapMap.has(trap)){
 
         trapMap.set(trap,{
           ending: trap,
-          solutions: responses.slice(0,6),
+          solutions: responses.slice(0,8),
           plays:[]
         })
 
@@ -148,7 +128,7 @@ function buildTraps(prefix,len,index){
 
     }
 
-    if(trapMap.size > 30) break
+    if(trapMap.size > 40) break
 
   }
 
@@ -160,32 +140,23 @@ function buildTraps(prefix,len,index){
 
 }
 
-// 🔹 WORKER HANDLER
+// 🔹 WORKER
 self.onmessage = e =>{
 
   const {type,payload} = e.data
 
   if(type==="LOAD_COMMON"){
-
     commonWords = payload
     commonWordSet = new Set(commonWords)
-
     buildIndex(commonWords,commonIndex)
-
     return
-
   }
 
   if(type==="LOAD_EXTRA"){
-
     extraWords = payload
-
     buildIndex(extraWords,extraIndex)
-
     mergeIndexes()
-
     return
-
   }
 
   if(type==="SEARCH"){
@@ -197,16 +168,20 @@ self.onmessage = e =>{
     const resultsCommon = common.slice(0,30)
 
     let resultsExtra = []
-
     if(resultsCommon.length < 30){
       resultsExtra = extra.slice(0,30-resultsCommon.length)
     }
 
-    // ❌ NO 2 LETTER TRAPS
+    // 🎯 NORMAL TRAPS
+    const traps3 = buildTraps(prefix,3,commonIndex)
+      .filter(t => t.solutions.length <= 7)
+      .slice(0,10)
 
-    const traps3 = buildTraps(prefix,3,commonIndex).slice(0,10)
-    const traps4 = buildTraps(prefix,4,commonIndex).slice(0,10)
+    const traps4 = buildTraps(prefix,4,commonIndex)
+      .filter(t => t.solutions.length <= 7)
+      .slice(0,10)
 
+    // 🧨 BEST TRAPS (hardest)
     const best = [
       ...buildTraps(prefix,3,allIndex),
       ...buildTraps(prefix,4,allIndex)
@@ -215,14 +190,22 @@ self.onmessage = e =>{
     .sort((a,b)=>a.solutions.length-b.solutions.length)
     .slice(0,20)
 
-    postMessage({
+    // 🔁 SPAMMABLE TRAPS (like eux, hoch)
+    const spammable = [
+      ...buildTraps(prefix,3,commonIndex),
+      ...buildTraps(prefix,4,commonIndex)
+    ]
+    .filter(t => t.solutions.length >= 4)
+    .sort((a,b)=>b.solutions.length-a.solutions.length)
+    .slice(0,20)
 
+    postMessage({
       resultsCommon,
       resultsExtra,
       traps3,
       traps4,
-      best
-
+      best,
+      spammable
     })
 
   }

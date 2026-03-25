@@ -292,3 +292,35 @@ cursor:pointer;
 font-size:13px;
 
 }
+.quick-panel{
+  display:flex;
+  gap:10px;
+  margin:15px 0;
+  flex-wrap:wrap;
+}
+
+.best-btn{
+  background:#ff4d4d;
+  color:white;
+  border:none;
+  padding:10px 15px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.spam-btn{
+  background:#00c2ff;
+  color:white;
+  border:none;
+  padding:10px 15px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.best-btn:hover{
+  background:#ff1a1a;
+}
+
+.spam-btn:hover{
+  background:#0099cc;
+}

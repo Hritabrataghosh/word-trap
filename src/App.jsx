@@ -5,115 +5,132 @@ import TrapSection from "./components/TrapSection"
 
 export default function App(){
 
-const worker = useRef(null)
+  const worker = useRef(null)
 
-const [commonResults,setCommonResults] = useState([])
-const [extraResults,setExtraResults] = useState([])
+  const [commonResults,setCommonResults] = useState([])
+  const [extraResults,setExtraResults] = useState([])
 
-const [trap2,setTrap2] = useState([])
-const [trap3,setTrap3] = useState([])
-const [trap4,setTrap4] = useState([])
-const [best,setBest] = useState([])
+  const [trap3,setTrap3] = useState([])
+  const [trap4,setTrap4] = useState([])
 
-useEffect(()=>{
+  const [best,setBest] = useState([])
+  const [spammable,setSpammable] = useState([])
 
-worker.current = new Worker(
-new URL("./worker/searchWorker.js",import.meta.url),
-{type:"module"}
-)
+  const [bestMove,setBestMove] = useState(null)
+  const [spamMove,setSpamMove] = useState(null)
 
-worker.current.onmessage = e =>{
+  // 🔹 INIT WORKER
+  useEffect(()=>{
 
-const {
-resultsCommon,
-resultsExtra,
-traps2,
-traps3,
-traps4,
-best
-} = e.data
+    worker.current = new Worker(
+      new URL("./worker/searchWorker.js",import.meta.url),
+      {type:"module"}
+    )
 
-setCommonResults(resultsCommon || [])
-setExtraResults(resultsExtra || [])
+    worker.current.onmessage = e =>{
 
-setTrap2(traps2 || [])
-setTrap3(traps3 || [])
-setTrap4(traps4 || [])
+      const {
+        resultsCommon,
+        resultsExtra,
+        traps3,
+        traps4,
+        best,
+        spammable
+      } = e.data
 
-setBest(best || [])
+      setCommonResults(resultsCommon || [])
+      setExtraResults(resultsExtra || [])
 
-}
+      setTrap3(traps3 || [])
+      setTrap4(traps4 || [])
 
-async function loadDictionaries(){
+      setBest(best || [])
+      setSpammable(spammable || [])
 
-const commonText = await fetch("/alphawords.txt").then(r=>r.text())
+      // 🔥 AUTO PICK MOVES
+      setBestMove(best?.[0] || null)
+      setSpamMove(spammable?.[0] || null)
 
-const commonWords = commonText
-.split("\n")
-.map(w=>w.trim())
-.filter(Boolean)
+    }
 
-worker.current.postMessage({
-type:"LOAD_COMMON",
-payload:commonWords
-})
+    async function load(){
 
-const extraText = await fetch("/extra_words.txt").then(r=>r.text())
+      const common = await fetch("/alphawords.txt").then(r=>r.text())
+      const extra = await fetch("/extra_words.txt").then(r=>r.text())
 
-const extraWords = extraText
-.split("\n")
-.map(w=>w.trim())
-.filter(Boolean)
+      worker.current.postMessage({
+        type:"LOAD_COMMON",
+        payload: common.split("\n").map(w=>w.trim()).filter(Boolean)
+      })
 
-worker.current.postMessage({
-type:"LOAD_EXTRA",
-payload:extraWords
-})
+      worker.current.postMessage({
+        type:"LOAD_EXTRA",
+        payload: extra.split("\n").map(w=>w.trim()).filter(Boolean)
+      })
 
-}
+    }
 
-loadDictionaries()
+    load()
 
-},[])
+  },[])
 
-const [searchVersion,setSearchVersion] = useState(0)
+  // 🔹 SEARCH
+  function handleSearch(q){
 
-function handleSearch(q){
+    setBestMove(null)
+    setSpamMove(null)
 
-  setSearchVersion(v => v + 1)
+    worker.current.postMessage({
+      type:"SEARCH",
+      payload:q.toLowerCase()
+    })
 
-  worker.current.postMessage({
-    type:"SEARCH",
-    payload:q.toLowerCase()
-  })
+  }
 
-}
+  return(
 
-return(
+    <div className="app">
 
-<div className="app">
+      <h1>Word Trap Solver</h1>
 
-<h1>Word Trap Solver</h1>
+      <SearchBar onSearch={handleSearch}/>
 
-<SearchBar onSearch={handleSearch}/>
+      {/* 🔥 QUICK ACTION PANEL */}
+      <div className="quick-panel">
 
-<h2>Common Words</h2>
-<WordList words={commonResults}/>
+        {bestMove && (
+          <button className="best-btn">
+            🧨 Best Trap: {bestMove.ending}
+          </button>
+        )}
 
-{extraResults.length > 0 && (
-<>
-<h2>Uncommon Words</h2>
-<WordList words={extraResults}/>
-</>
-)}
+        {spamMove && (
+          <button className="spam-btn">
+            🔁 Spam Trap: {spamMove.ending}
+          </button>
+        )}
 
-<TrapSection title="Best Traps" traps={best} reset={searchVersion}/>
-<TrapSection title="2 Letter Traps" traps={trap2} reset={searchVersion}/>
-<TrapSection title="3 Letter Traps" traps={trap3} reset={searchVersion}/>
-<TrapSection title="4 Letter Traps" traps={trap4} reset={searchVersion}/>
+      </div>
 
-</div>
+      {/* WORDS */}
+      <h2>Common Words</h2>
+      <WordList words={commonResults}/>
 
-)
+      {extraResults.length > 0 && (
+        <>
+          <h2>Uncommon Words</h2>
+          <WordList words={extraResults}/>
+        </>
+      )}
+
+      {/* TRAPS */}
+      <TrapSection title="Best Traps" traps={best}/>
+      <TrapSection title="Spammable Traps" traps={spammable}/>
+      <TrapSection title="3 Letter Traps" traps={trap3}/>
+      <TrapSection title="4 Letter Traps" traps={trap4}/>
+
+    </div>
+
+  )
 
 }
