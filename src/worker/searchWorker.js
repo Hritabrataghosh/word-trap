@@ -5,6 +5,7 @@ const commonIndex = new Map()
 const extraIndex = new Map()
 const allIndex = new Map()
 
+// ---------------- BUILD INDEX ----------------
 function buildIndex(words,map){
 
   for(const w of words){
@@ -27,24 +28,22 @@ function buildIndex(words,map){
 
 }
 
+// ---------------- MERGE ----------------
 function mergeIndexes(){
 
   for(const [k,v] of commonIndex){
-
     if(!allIndex.has(k)) allIndex.set(k,[])
     allIndex.get(k).push(...v)
-
   }
 
   for(const [k,v] of extraIndex){
-
     if(!allIndex.has(k)) allIndex.set(k,[])
     allIndex.get(k).push(...v)
-
   }
 
 }
 
+// ---------------- QUERY PARSER ----------------
 function parseQuery(q){
 
   const parts = q.trim().split(/\s+/)
@@ -53,76 +52,74 @@ function parseQuery(q){
   let suffix = ""
 
   if(parts.length === 1){
-
-    if(q.startsWith(" ")){
-      suffix = parts[0]
-    }else{
-      prefix = parts[0]
-    }
-
-  }else if(parts.length >= 2){
-
+    if(q.startsWith(" ")) suffix = parts[0]
+    else prefix = parts[0]
+  }else{
     prefix = parts[0]
     suffix = parts[1]
-
   }
 
   return {prefix,suffix}
 
 }
 
+// ---------------- FILTER ----------------
 function filterWords(words,prefix,suffix){
 
   return words.filter(w=>{
-
     if(prefix && !w.startsWith(prefix)) return false
     if(suffix && !w.endsWith(suffix)) return false
-
     return true
-
   })
 
 }
 
+// ---------------- RESPONSES ----------------
 function getResponses(trap,index){
+
+  if(!index) return []
 
   const list = index.get(trap) || []
 
-  const invalidForms = new Set([
+  const invalid = new Set([
     trap,
-    trap + "s",
-    trap + "es"
+    trap+"s",
+    trap+"es"
   ])
 
-  // Remove invalid forms
-  return list.filter(w => !invalidForms.has(w))
+  return list.filter(w => !invalid.has(w))
 
 }
 
+// ---------------- VALIDATION ----------------
 function validTrap(trap,responses,index){
 
-  // ❌ If trap itself exists → reject immediately
-  if(index.get(trap)?.includes(trap)) return false
-  if(index.get(trap)?.includes(trap+"s")) return false
-  if(index.get(trap)?.includes(trap+"es")) return false
+  if(!index) return false
 
-  // ❌ No responses or too many
+  const list = index.get(trap) || []
+
+  // ❌ trap itself exists
+  if(list.includes(trap)) return false
+  if(list.includes(trap+"s")) return false
+  if(list.includes(trap+"es")) return false
+
   if(responses.length === 0 || responses.length > 7) return false
 
-  // ❌ EVERY response must be long enough
+  // ❌ enforce +3 rule STRICTLY
   for(const r of responses){
-
     if(r.length < trap.length + 3){
       return false
     }
-
   }
 
   return true
 
 }
 
+// ---------------- BUILD TRAPS ----------------
 function buildTraps(prefix,len,index){
+
+  if(!index || !prefix) return []
 
   const playable = index.get(prefix) || []
 
@@ -136,7 +133,6 @@ function buildTraps(prefix,len,index){
 
     const responses = getResponses(trap,index)
 
-    // 🔥 STRICT VALIDATION BEFORE ADDING
     if(!validTrap(trap,responses,index)) continue
 
     if(!trapMap.has(trap)){
@@ -157,7 +153,10 @@ function buildTraps(prefix,len,index){
 
 }
 
+// ---------------- SPAMMABLE ----------------
 function buildSpammable(prefix,index){
+
+  if(!index || !prefix) return []
 
   const playable = index.get(prefix) || []
 
@@ -172,8 +171,7 @@ function buildSpammable(prefix,index){
     const responses = getResponses(trap,index)
 
     if(responses.length < 3 || responses.length > 7) continue
-
-    if(!validTrap(trap,responses)) continue
+    if(!validTrap(trap,responses,index)) continue
 
     if(!trapMap.has(trap)){
 
@@ -193,25 +191,22 @@ function buildSpammable(prefix,index){
 
 }
 
+// ---------------- MAIN ----------------
 self.onmessage = e=>{
 
   const {type,payload} = e.data
 
   if(type==="LOAD_COMMON"){
-
     commonWords = payload
     buildIndex(commonWords,commonIndex)
     return
-
   }
 
   if(type==="LOAD_EXTRA"){
-
     extraWords = payload
     buildIndex(extraWords,extraIndex)
     mergeIndexes()
     return
-
   }
 
   if(type==="SEARCH"){
@@ -246,7 +241,7 @@ self.onmessage = e=>{
         ...buildTraps(prefix,3,allIndex),
         ...buildTraps(prefix,4,allIndex)
       ]
-      .filter(t=>t.solutions.length<=2)
+      .filter(t => t.solutions.length <= 2)
       .slice(0,20)
 
       spammable = buildSpammable(prefix,allIndex)
@@ -254,14 +249,12 @@ self.onmessage = e=>{
     }
 
     postMessage({
-
       resultsCommon,
       resultsExtra,
       traps3,
       traps4,
       best,
       spammable
-
     })
 
   }
