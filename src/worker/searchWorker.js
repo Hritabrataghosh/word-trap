@@ -88,20 +88,28 @@ function getResponses(trap,index){
 
   const list = index.get(trap) || []
 
-  const invalid = new Set([
+  const invalidForms = new Set([
     trap,
-    trap+"s",
-    trap+"es"
+    trap + "s",
+    trap + "es"
   ])
 
-  return list.filter(w => !invalid.has(w))
+  // Remove invalid forms
+  return list.filter(w => !invalidForms.has(w))
 
 }
 
-function validTrap(trap,responses){
+function validTrap(trap,responses,index){
 
+  // ❌ If trap itself exists → reject immediately
+  if(index.get(trap)?.includes(trap)) return false
+  if(index.get(trap)?.includes(trap+"s")) return false
+  if(index.get(trap)?.includes(trap+"es")) return false
+
+  // ❌ No responses or too many
   if(responses.length === 0 || responses.length > 7) return false
 
+  // ❌ EVERY response must be long enough
   for(const r of responses){
 
     if(r.length < trap.length + 3){
@@ -128,7 +136,8 @@ function buildTraps(prefix,len,index){
 
     const responses = getResponses(trap,index)
 
-    if(!validTrap(trap,responses)) continue
+    // 🔥 STRICT VALIDATION BEFORE ADDING
+    if(!validTrap(trap,responses,index)) continue
 
     if(!trapMap.has(trap)){
 
