@@ -184,6 +184,61 @@ function getResponses(trap){
 
   })
 
+}function getResponses(trap){
+
+  const responses = index.get(trap) || []
+
+  return responses.filter(w => {
+
+    if(w === trap) return false
+
+    const diff = w.length - trap.length
+
+    const bad = [
+      trap + "s",
+      trap + "es",
+      trap + "ed",
+      trap + "er",
+      trap + "d",
+      trap + "r",
+      trap + "ing"
+    ]
+
+    if(bad.includes(w)){
+      return false
+    }
+
+    // auto accept hard long solves
+    if(diff >= 3){
+      return true
+    }
+
+    // reject short/common solves
+    if(diff <= 2){
+
+      // common easy patterns
+      if(
+        w.endsWith("s") ||
+        w.endsWith("es") ||
+        w.endsWith("ed") ||
+        w.endsWith("er") ||
+        w.endsWith("ly") ||
+        w.endsWith("ing")
+      ){
+        return false
+      }
+
+      // reject very short/easy words
+      if(w.length <= trap.length + 2){
+        return false
+      }
+
+    }
+
+    return true
+
+  })
+
 }
 
 function buildTraps(prefix,len,min,max){
@@ -192,7 +247,7 @@ function buildTraps(prefix,len,min,max){
 
   const trapMap = new Map()
 
-  for(const word of shuffle(playable).slice(0,1000)){
+  for(const word of shuffle(playable).slice(0,1200)){
 
     if(word.length <= prefix.length + len){
       continue
@@ -202,8 +257,11 @@ function buildTraps(prefix,len,min,max){
 
     const responses = getResponses(trap)
 
+    // NEW RULE:
+    // traps must have at least 3 solves
+
     if(
-      responses.length >= min &&
+      responses.length >= 3 &&
       responses.length <= max
     ){
 
