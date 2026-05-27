@@ -253,36 +253,95 @@ function buildSpam(prefix){
 
   const playable = index.get(prefix) || []
 
-  const out = []
+  const categories = {
 
-  const used = new Set()
+    ters: [],
+    ler: [],
+    raph: [],
+    ally: [],
+    omo: [],
+    ines: [],
+    ion: []
 
-  for(const w of playable.slice(0,500)){
+  }
 
-    for(const end of spamEndings){
+  for(const w of playable.slice(0,1200)){
 
-      if(w.endsWith(end)){
+    if(w.length < 5) continue
 
-        const key = w + end
+    if(w.endsWith("ters")){
+      categories.ters.push(w)
+    }
 
-        if(used.has(key)) continue
+    if(
+      w.endsWith("ler") ||
+      w.endsWith("lers")
+    ){
+      categories.ler.push(w)
+    }
 
-        used.add(key)
+    if(
+      w.endsWith("raph") ||
+      w.endsWith("graph")
+    ){
+      categories.raph.push(w)
+    }
 
-        out.push({
-          word:w,
-          ending:end
-        })
+    if(
+      w.endsWith("ally") ||
+      w.endsWith("ically")
+    ){
+      categories.ally.push(w)
+    }
 
-      }
+    if(
+      w.endsWith("omo")
+    ){
+      categories.omo.push(w)
+    }
+
+    if(
+      w.endsWith("ines") ||
+      w.endsWith("eines")
+    ){
+      categories.ines.push(w)
+    }
+
+    if(
+      w.endsWith("tion") ||
+      w.endsWith("ation")
+    ){
+      categories.ion.push(w)
+    }
+
+  }
+
+  const result = []
+
+  function addSome(arr,label,max=6){
+
+    const sorted = sortWords(arr)
+
+    for(const word of sorted.slice(0,max)){
+
+      result.push({
+        word,
+        ending:label
+      })
 
     }
 
   }
 
-  return out
-  .sort((a,b)=>a.word.length-b.word.length)
-  .slice(0,40)
+  addSome(categories.ters,"ters")
+  addSome(categories.ler,"ler")
+  addSome(categories.raph,"raph")
+  addSome(categories.ally,"ally")
+  addSome(categories.omo,"omo")
+  addSome(categories.ines,"ines")
+  addSome(categories.ion,"ion")
+
+  return result.slice(0,40)
 
 }
 
