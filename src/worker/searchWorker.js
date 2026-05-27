@@ -5,6 +5,8 @@ const commonIndex = new Map()
 const extraIndex = new Map()
 const allIndex = new Map()
 
+const responseCache = new Map()
+
 const bannedEndings = [
   "s",
   "es",
@@ -21,6 +23,8 @@ const bannedEndings = [
 function buildIndex(words,map){
 
   for(const w of words){
+
+    if(w.length < 3) continue
 
     for(let i=1;i<=8;i++){
 
@@ -94,9 +98,7 @@ function isEasySolve(trap,word){
 
   if(word === trap) return true
 
-  const diff = word.length - trap.length
-
-  if(diff <= 2){
+  if(word.length - trap.length <= 2){
     return true
   }
 
@@ -114,9 +116,25 @@ function isEasySolve(trap,word){
 
 function getResponses(trap,index){
 
+  const cacheKey = trap + "_" + (index === commonIndex ? "c" : "a")
+
+  if(responseCache.has(cacheKey)){
+    return responseCache.get(cacheKey)
+  }
+
   const list = index.get(trap) || []
 
-  return list.filter(w => !isEasySolve(trap,w))
+  const filtered = list.filter(w=>{
+
+    if(w.length < 3) return false
+
+    return !isEasySolve(trap,w)
+
+  })
+
+  responseCache.set(cacheKey,filtered)
+
+  return filtered
 
 }
 
@@ -126,13 +144,19 @@ function buildTraps(prefix,len,index){
 
   const trapMap = new Map()
 
-  for(const word of playable){
+  const limitedPlayable = playable.slice(0,300)
+
+  for(const word of limitedPlayable){
 
     if(word.length <= prefix.length + len){
       continue
     }
 
     const trap = word.slice(-len)
+
+    if(trap.length < 3) continue
+
+    if(trapMap.has(trap)) continue
 
     const responses = getResponses(trap,index)
 
@@ -155,17 +179,11 @@ function buildTraps(prefix,len,index){
       continue
     }
 
-    if(!trapMap.has(trap)){
-
-      trapMap.set(trap,{
-        ending: trap,
-        solutions: sortShortest(responses).slice(0,6),
-        plays:[]
-      })
-
-    }
-
-    trapMap.get(trap).plays.push(word)
+    trapMap.set(trap,{
+      ending: trap,
+      solutions: sortShortest(responses).slice(0,6),
+      plays:[word]
+    })
 
   }
 
@@ -197,17 +215,19 @@ function buildSpam(prefix){
     "ment"
   ]
 
-  const results = []
-
   const playable = commonIndex.get(prefix) || []
 
-  for(const w of playable){
+  const spam = []
+
+  for(const w of playable.slice(0,400)){
+
+    if(w.length < 5) continue
 
     for(const c of categories){
 
       if(w.endsWith(c)){
 
-        results.push({
+        spam.push({
           ending:c,
           word:w
         })
@@ -218,7 +238,7 @@ function buildSpam(prefix){
 
   }
 
-  return results.slice(0,20)
+  return spam.slice(0,20)
 
 }
 
@@ -228,7 +248,7 @@ self.onmessage = e =>{
 
   if(type==="LOAD_COMMON"){
 
-    commonWords = payload
+    commonWords = payload.filter(w=>w.length >= 3)
 
     buildIndex(commonWords,commonIndex)
 
@@ -238,7 +258,7 @@ self.onmessage = e =>{
 
   if(type==="LOAD_EXTRA"){
 
-    extraWords = payload
+    extraWords = payload.filter(w=>w.length >= 3)
 
     buildIndex(extraWords,extraIndex)
 
@@ -250,6 +270,8 @@ self.onmessage = e =>{
 
   if(type==="SEARCH"){
 
+    responseCache.clear()
+
     const raw = payload.trim()
 
     const parts = raw.split(" ")
@@ -259,19 +281,17 @@ self.onmessage = e =>{
 
     const {common,extra} = search(start)
 
-    let resultsCommon = common
+    let resultsCommon = common.filter(w=>w.length >= 3)
 
     if(end){
-
       resultsCommon = resultsCommon.filter(w=>w.endsWith(end))
     }
 
     resultsCommon = resultsCommon.slice(0,30)
 
-    let resultsExtra = extra
+    let resultsExtra = extra.filter(w=>w.length >= 3)
 
     if(end){
-
       resultsExtra = resultsExtra.filter(w=>w.endsWith(end))
     }
 
