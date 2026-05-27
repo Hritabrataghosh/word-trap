@@ -13,6 +13,18 @@ const banned = [
   "ly"
 ]
 
+const spamEndings = [
+  "ters",
+  "raph",
+  "ally",
+  "ines",
+  "eise",
+  "ream",
+  "lers",
+  "omo",
+  "hm"
+]
+
 function buildIndex(){
 
   for(const word of words){
@@ -109,7 +121,7 @@ function getResponses(trap){
 
   }
 
-  return valid
+  return sortWords(valid)
 
 }
 
@@ -121,13 +133,13 @@ function buildTraps(prefix,len,max=7){
 
   const used = new Set()
 
-  for(const word of playable.slice(0,120)){
+  for(const playWord of playable.slice(0,180)){
 
-    if(word.length <= prefix.length + len){
+    if(playWord.length <= prefix.length + len){
       continue
     }
 
-    const trap = word.slice(-len)
+    const trap = playWord.slice(-len)
 
     if(trap.length < 3){
       continue
@@ -147,20 +159,43 @@ function buildTraps(prefix,len,max=7){
     ){
 
       out.push({
-        ending:trap,
-        word,
-        solutions:sortWords(responses)
+        play:playWord,
+        trap,
+        solutions:responses
       })
 
-    }
-
-    if(out.length >= 10){
-      break
     }
 
   }
 
   return out
+
+}
+
+function buildSpam(prefix){
+
+  const playable = index.get(prefix) || []
+
+  const out = []
+
+  for(const w of playable.slice(0,300)){
+
+    for(const end of spamEndings){
+
+      if(w.endsWith(end)){
+
+        out.push({
+          word:w,
+          ending:end
+        })
+
+      }
+
+    }
+
+  }
+
+  return out.slice(0,25)
 
 }
 
@@ -189,20 +224,36 @@ self.onmessage = e =>{
 
     const results = search(start,end)
 
-    const traps3 = buildTraps(start,3)
+    let traps3 = buildTraps(start,3)
 
-    const traps4 = buildTraps(start,4)
+    let traps4 = buildTraps(start,4)
 
-    const best = [
-      ...buildTraps(start,3,2),
-      ...buildTraps(start,4,2)
-    ].slice(0,15)
+    let best = [
+      ...buildTraps(start,3,1),
+      ...buildTraps(start,4,1)
+    ]
+
+    if(best.length < 5){
+
+      best = [
+        ...best,
+        ...buildTraps(start,3,2)
+      ]
+
+    }
+
+    traps3 = traps3.slice(0,10)
+    traps4 = traps4.slice(0,10)
+    best = best.slice(0,10)
+
+    const spam = buildSpam(start)
 
     postMessage({
       results,
       best,
       traps3,
-      traps4
+      traps4,
+      spam
     })
 
   }

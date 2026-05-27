@@ -1,9 +1,6 @@
-export default function TrapSection({
-title,
-traps=[]
-}){
+export default function SpamSection({spam=[]}){
 
-if(traps.length===0){
+if(spam.length===0){
 return null
 }
 
@@ -13,24 +10,22 @@ return(
 
 <div className="section-header">
 
-<span>{title}</span>
+<span>Spammable Chains</span>
 
 <span className="count">
-{traps.length} traps
+{spam.length}
 </span>
 
 </div>
 
 <div className="trap-grid">
 
-{traps.map((t,i)=>(
+{spam.map((s,i)=>(
 
 <div key={i} className="trap-card">
 
 <span className="trap-label">
-
-{t.play}
-
+{s.word}
 </span>
 
 <span className="arrow">
@@ -38,9 +33,7 @@ return(
 </span>
 
 <span className="trap-end">
-
-{t.trap}
-
+{s.ending}
 </span>
 
 </div>
