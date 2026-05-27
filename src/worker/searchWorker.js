@@ -5,26 +5,24 @@ const commonIndex = new Map()
 const extraIndex = new Map()
 const allIndex = new Map()
 
-const spamCategories = [
-  "ters",
-  "ally",
-  "omo",
-  "ler",
-  "raph",
-  "ines",
-  "hm",
-  "eise",
-  "ream",
-  "enders"
+const bannedEndings = [
+  "s",
+  "es",
+  "ed",
+  "er",
+  "ers",
+  "ing",
+  "ings",
+  "ly",
+  "d",
+  "r"
 ]
-
-// ---------------- INDEX ----------------
 
 function buildIndex(words,map){
 
   for(const w of words){
 
-    for(let i=1;i<=6;i++){
+    for(let i=1;i<=8;i++){
 
       if(w.length < i) break
 
@@ -42,150 +40,87 @@ function buildIndex(words,map){
 
 }
 
-// ---------------- MERGE ----------------
-
 function mergeIndexes(){
 
   for(const [k,v] of commonIndex){
 
-    if(!allIndex.has(k)) allIndex.set(k,[])
+    if(!allIndex.has(k)){
+      allIndex.set(k,[])
+    }
+
     allIndex.get(k).push(...v)
 
   }
 
   for(const [k,v] of extraIndex){
 
-    if(!allIndex.has(k)) allIndex.set(k,[])
+    if(!allIndex.has(k)){
+      allIndex.set(k,[])
+    }
+
     allIndex.get(k).push(...v)
 
   }
 
 }
 
-// ---------------- QUERY ----------------
+function sortShortest(words){
 
-function parseQuery(q){
+  return [...words].sort((a,b)=>{
 
-  const parts = q.trim().split(/\s+/)
-
-  let prefix = ""
-  let suffix = ""
-
-  if(parts.length === 1){
-
-    if(q.startsWith(" ")){
-      suffix = parts[0]
-    }else{
-      prefix = parts[0]
+    if(a.length !== b.length){
+      return a.length - b.length
     }
 
-  }else{
+    return a.localeCompare(b)
 
-    prefix = parts[0]
-    suffix = parts[1]
+  })
+
+}
+
+function search(prefix){
+
+  const common = commonIndex.get(prefix) || []
+  const extra = extraIndex.get(prefix) || []
+
+  return {
+    common: sortShortest(common),
+    extra: sortShortest(extra)
+  }
+
+}
+
+function isEasySolve(trap,word){
+
+  if(word === trap) return true
+
+  const diff = word.length - trap.length
+
+  if(diff <= 2){
+    return true
+  }
+
+  for(const end of bannedEndings){
+
+    if(word === trap + end){
+      return true
+    }
 
   }
 
-  return {prefix,suffix}
+  return false
 
 }
-
-// ---------------- FILTER ----------------
-
-function filterWords(words,prefix,suffix){
-
-  return words
-  .filter(w=>{
-
-    if(prefix && !w.startsWith(prefix)) return false
-    if(suffix && !w.endsWith(suffix)) return false
-
-    return true
-
-  })
-  .sort((a,b)=>a.length-b.length)
-
-}
-
-// ---------------- RESPONSE ----------------
 
 function getResponses(trap,index){
 
-  if(!index) return []
-
   const list = index.get(trap) || []
 
-  return list.filter(w=>{
-
-    if(w===trap) return false
-
-    const add = w.slice(trap.length)
-
-    const commonCheap = [
-      "s",
-      "es",
-      "ed",
-      "d",
-      "er",
-      "ers",
-      "ing",
-      "ly",
-      "e"
-    ]
-
-    if(commonCheap.includes(add)) return false
-
-    return true
-
-  })
+  return list.filter(w => !isEasySolve(trap,w))
 
 }
-
-// ---------------- VALID TRAP ----------------
-
-function validTrap(trap,responses){
-
-  if(responses.length===0) return false
-
-  // STRICT AUTO VALID
-  const allBig = responses.every(
-    r=>r.length >= trap.length+3
-  )
-
-  if(allBig) return true
-
-  // SMALL EXTENSION CHECK
-  for(const r of responses){
-
-    const add = r.slice(trap.length)
-
-    const cheap = [
-      "s",
-      "es",
-      "ed",
-      "d",
-      "er",
-      "ers",
-      "e",
-      "ly",
-      "ing"
-    ]
-
-    if(cheap.includes(add)){
-      return false
-    }
-
-  }
-
-  return true
-
-}
-
-// ---------------- BUILD TRAPS ----------------
 
 function buildTraps(prefix,len,index){
-
-  if(!index || !prefix) return []
 
   const playable = index.get(prefix) || []
 
@@ -193,21 +128,38 @@ function buildTraps(prefix,len,index){
 
   for(const word of playable){
 
-    if(word.length <= prefix.length + len) continue
+    if(word.length <= prefix.length + len){
+      continue
+    }
 
     const trap = word.slice(-len)
 
     const responses = getResponses(trap,index)
 
-    if(!validTrap(trap,responses)) continue
+    if(responses.length === 0){
+      continue
+    }
+
+    let valid = true
+
+    for(const r of responses){
+
+      if(isEasySolve(trap,r)){
+        valid = false
+        break
+      }
+
+    }
+
+    if(!valid){
+      continue
+    }
 
     if(!trapMap.has(trap)){
 
       trapMap.set(trap,{
-        ending:trap,
-        solutions:responses
-        .sort((a,b)=>a.length-b.length)
-        .slice(0,6),
+        ending: trap,
+        solutions: sortShortest(responses).slice(0,6),
         plays:[]
       })
 
@@ -217,31 +169,47 @@ function buildTraps(prefix,len,index){
 
   }
 
-  return Array
-  .from(trapMap.values())
-  .sort((a,b)=>a.solutions.length-b.solutions.length)
+  return Array.from(trapMap.values())
+    .sort((a,b)=>{
+
+      if(a.solutions.length !== b.solutions.length){
+        return a.solutions.length - b.solutions.length
+      }
+
+      return a.ending.localeCompare(b.ending)
+
+    })
 
 }
 
-// ---------------- SPAMS ----------------
+function buildSpam(prefix){
 
-function buildSpam(prefix,index){
+  const categories = [
+    "ters",
+    "raph",
+    "ally",
+    "ines",
+    "eise",
+    "ream",
+    "lers",
+    "ends",
+    "ings",
+    "ment"
+  ]
 
-  if(!prefix) return []
+  const results = []
 
-  const playable = index.get(prefix) || []
+  const playable = commonIndex.get(prefix) || []
 
-  const result = []
+  for(const w of playable){
 
-  for(const word of playable){
+    for(const c of categories){
 
-    for(const spam of spamCategories){
+      if(w.endsWith(c)){
 
-      if(word.endsWith(spam)){
-
-        result.push({
-          ending:spam,
-          play:word
+        results.push({
+          ending:c,
+          word:w
         })
 
       }
@@ -250,20 +218,20 @@ function buildSpam(prefix,index){
 
   }
 
-  return result.slice(0,30)
+  return results.slice(0,20)
 
 }
 
-// ---------------- MAIN ----------------
-
-self.onmessage = e=>{
+self.onmessage = e =>{
 
   const {type,payload} = e.data
 
   if(type==="LOAD_COMMON"){
 
     commonWords = payload
+
     buildIndex(commonWords,commonIndex)
+
     return
 
   }
@@ -271,50 +239,56 @@ self.onmessage = e=>{
   if(type==="LOAD_EXTRA"){
 
     extraWords = payload
+
     buildIndex(extraWords,extraIndex)
+
     mergeIndexes()
+
     return
 
   }
 
   if(type==="SEARCH"){
 
-    const {prefix,suffix} = parseQuery(payload)
+    const raw = payload.trim()
 
-    let common = filterWords(
-      commonWords,
-      prefix,
-      suffix
-    )
+    const parts = raw.split(" ")
 
-    let extra = filterWords(
-      extraWords,
-      prefix,
-      suffix
-    )
+    const start = parts[0] || ""
+    const end = parts[1] || ""
 
-    const resultsCommon = common.slice(0,30)
+    const {common,extra} = search(start)
 
-    const resultsExtra =
-    extra.slice(0,20)
+    let resultsCommon = common
 
-    const traps3 =
-    buildTraps(prefix,3,commonIndex)
-    .slice(0,10)
+    if(end){
 
-    const traps4 =
-    buildTraps(prefix,4,commonIndex)
-    .slice(0,10)
+      resultsCommon = resultsCommon.filter(w=>w.endsWith(end))
+    }
+
+    resultsCommon = resultsCommon.slice(0,30)
+
+    let resultsExtra = extra
+
+    if(end){
+
+      resultsExtra = resultsExtra.filter(w=>w.endsWith(end))
+    }
+
+    resultsExtra = resultsExtra.slice(0,30)
+
+    const traps3 = buildTraps(start,3,commonIndex).slice(0,10)
+
+    const traps4 = buildTraps(start,4,commonIndex).slice(0,10)
 
     const best = [
-      ...buildTraps(prefix,3,allIndex),
-      ...buildTraps(prefix,4,allIndex)
+      ...buildTraps(start,3,allIndex),
+      ...buildTraps(start,4,allIndex)
     ]
-    .filter(t=>t.solutions.length<=2)
+    .filter(t=>t.solutions.length <= 2)
     .slice(0,20)
 
-    const spammable =
-    buildSpam(prefix,allIndex)
+    const spam = buildSpam(start)
 
     postMessage({
 
@@ -323,7 +297,7 @@ self.onmessage = e=>{
       traps3,
       traps4,
       best,
-      spammable
+      spam
 
     })
 
