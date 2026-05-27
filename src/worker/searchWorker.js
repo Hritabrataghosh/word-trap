@@ -14,15 +14,80 @@ const banned = [
 ]
 
 const spamEndings = [
+
   "ters",
+  "setter",
+  "seller",
   "raph",
+  "graph",
+  "grapher",
   "ally",
+  "ically",
+  "ality",
+  "alism",
+  "ation",
+  "ations",
+  "izer",
+  "izers",
+  "iness",
+  "inesses",
   "ines",
+  "eines",
   "eise",
+  "heimer",
+  "stein",
+  "ology",
+  "ologist",
+  "ologists",
+  "arium",
+  "ariums",
+  "esque",
+  "esques",
+  "scape",
+  "scapes",
+  "storm",
+  "caster",
+  "casters",
+  "blade",
+  "blades",
+  "smith",
+  "smiths",
+  "craft",
+  "crafter",
+  "crafters",
+  "mancer",
+  "mancers",
+  "phobia",
+  "phobias",
+  "phile",
+  "philes",
+  "verse",
+  "verses",
+  "zilla",
+  "tron",
+  "topia",
+  "topiae",
+  "topia",
+  "topiae",
+  "topia",
+  "topiae",
+  "topia",
   "ream",
   "lers",
   "omo",
-  "hm"
+  "hm",
+  "eaux",
+  "tion",
+  "sion",
+  "cious",
+  "tious",
+  "gasm",
+  "gasms",
+  "tainment",
+  "tainments",
+  "tainmental",
+  "tainmentally"
+
 ]
 
 function buildIndex(){
@@ -65,12 +130,24 @@ function sortWords(arr){
 
 function search(start,end=""){
 
-  let results = index.get(start) || []
+  let results = []
+
+  if(start){
+
+    results = index.get(start) || []
+
+  }else{
+
+    results = words
+
+  }
 
   results = results.filter(w=>w.length >= 3)
 
   if(end){
+
     results = results.filter(w=>w.endsWith(end))
+
   }
 
   return sortWords(results).slice(0,30)
@@ -133,7 +210,7 @@ function buildTraps(prefix,len,max=7){
 
   const used = new Set()
 
-  for(const playWord of playable.slice(0,180)){
+  for(const playWord of playable.slice(0,220)){
 
     if(playWord.length <= prefix.length + len){
       continue
@@ -178,11 +255,19 @@ function buildSpam(prefix){
 
   const out = []
 
-  for(const w of playable.slice(0,300)){
+  const used = new Set()
+
+  for(const w of playable.slice(0,500)){
 
     for(const end of spamEndings){
 
       if(w.endsWith(end)){
+
+        const key = w + end
+
+        if(used.has(key)) continue
+
+        used.add(key)
 
         out.push({
           word:w,
@@ -195,7 +280,9 @@ function buildSpam(prefix){
 
   }
 
-  return out.slice(0,25)
+  return out
+  .sort((a,b)=>a.word.length-b.word.length)
+  .slice(0,40)
 
 }
 
@@ -205,7 +292,9 @@ self.onmessage = e =>{
 
   if(type==="LOAD_WORDS"){
 
-    words = payload.filter(w=>w.length >= 3)
+    words = payload
+      .map(w=>w.trim().toLowerCase())
+      .filter(w=>w.length >= 3)
 
     buildIndex()
 
@@ -215,38 +304,46 @@ self.onmessage = e =>{
 
   if(type==="SEARCH"){
 
-    const raw = payload.trim()
+    const raw = payload.toLowerCase()
 
-    const parts = raw.split(" ")
+    let start = ""
+    let end = ""
 
-    const start = parts[0] || ""
-    const end = parts[1] || ""
+    if(raw.startsWith(" ")){
 
-    const results = search(start,end)
+      end = raw.trim()
 
-    let traps3 = buildTraps(start,3)
+    }else{
 
-    let traps4 = buildTraps(start,4)
+      const parts = raw.split(" ")
 
-    let best = [
-      ...buildTraps(start,3,1),
-      ...buildTraps(start,4,1)
-    ]
-
-    if(best.length < 5){
-
-      best = [
-        ...best,
-        ...buildTraps(start,3,2)
-      ]
+      start = parts[0] || ""
+      end = parts[1] || ""
 
     }
 
-    traps3 = traps3.slice(0,10)
-    traps4 = traps4.slice(0,10)
-    best = best.slice(0,10)
+    const results = search(start,end)
 
-    const spam = buildSpam(start)
+    let traps3 = []
+    let traps4 = []
+    let best = []
+
+    if(start){
+
+      traps3 = buildTraps(start,3).slice(0,10)
+
+      traps4 = buildTraps(start,4).slice(0,10)
+
+      best = [
+        ...buildTraps(start,3,1),
+        ...buildTraps(start,4,1)
+      ].slice(0,10)
+
+    }
+
+    const spam = start
+      ? buildSpam(start)
+      : []
 
     postMessage({
       results,
