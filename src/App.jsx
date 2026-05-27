@@ -1,22 +1,23 @@
-import { useEffect,useRef,useState } from "react"
+import { useEffect, useRef, useState } from "react"
+
 import SearchBar from "./components/SearchBar"
 import WordList from "./components/WordList"
 import TrapSection from "./components/TrapSection"
+import SpamSection from "./components/SpamSection"
 
 export default function App(){
 
 const worker = useRef(null)
 
-const [mode,setMode] = useState("normal")
+const [results,setResults] = useState([])
 
-const [commonResults,setCommonResults] = useState([])
-const [extraResults,setExtraResults] = useState([])
-
-const [trap3,setTrap3] = useState([])
-const [trap4,setTrap4] = useState([])
-
+const [traps3,setTraps3] = useState([])
+const [traps4,setTraps4] = useState([])
 const [best,setBest] = useState([])
-const [spammable,setSpammable] = useState([])
+
+const [spam,setSpam] = useState([])
+
+const [mode,setMode] = useState("normal")
 
 useEffect(()=>{
 
@@ -25,51 +26,41 @@ new URL("./worker/searchWorker.js",import.meta.url),
 {type:"module"}
 )
 
-worker.current.onmessage = e=>{
+worker.current.onmessage = e =>{
 
 const {
-resultsCommon,
-resultsExtra,
+results,
 traps3,
 traps4,
 best,
-spammable
+spam
 } = e.data
 
-setCommonResults(resultsCommon||[])
-setExtraResults(resultsExtra||[])
+setResults(results || [])
 
-setTrap3(traps3||[])
-setTrap4(traps4||[])
+setTraps3(traps3 || [])
+setTraps4(traps4 || [])
+setBest(best || [])
 
-setBest(best||[])
-setSpammable(spammable||[])
-
-}
-
-async function load(){
-
-const common =
-await fetch("/alphawords.txt")
-.then(r=>r.text())
-
-const extra =
-await fetch("/extra_words.txt")
-.then(r=>r.text())
-
-worker.current.postMessage({
-type:"LOAD_COMMON",
-payload:common.split("\n")
-})
-
-worker.current.postMessage({
-type:"LOAD_EXTRA",
-payload:extra.split("\n")
-})
+setSpam(spam || [])
 
 }
 
-load()
+fetch("/alphawords.txt")
+.then(r=>r.text())
+.then(text=>{
+
+const words = text
+.split("\n")
+.map(w=>w.trim())
+.filter(Boolean)
+
+worker.current.postMessage({
+type:"LOAD_WORDS",
+payload:words
+})
+
+})
 
 },[])
 
@@ -92,12 +83,14 @@ return(
 
 <button
 onClick={()=>setMode("normal")}
+className={mode==="normal" ? "active" : ""}
 >
 Normal
 </button>
 
 <button
 onClick={()=>setMode("spam")}
+className={mode==="spam" ? "active" : ""}
 >
 Spam
 </button>
@@ -106,17 +99,12 @@ Spam
 
 <SearchBar onSearch={handleSearch}/>
 
-<h2>Common Words</h2>
-<WordList words={commonResults}/>
+<h2>Words</h2>
 
-{extraResults.length>0 && (
-<>
-<h2>Uncommon Words</h2>
-<WordList words={extraResults}/>
-</>
-)}
+<WordList words={results}/>
 
 {mode==="normal" && (
+
 <>
 
 <TrapSection
@@ -126,23 +114,21 @@ traps={best}
 
 <TrapSection
 title="3 Letter Traps"
-traps={trap3}
+traps={traps3}
 />
 
 <TrapSection
 title="4 Letter Traps"
-traps={trap4}
+traps={traps4}
 />
 
 </>
+
 )}
 
 {mode==="spam" && (
 
-<TrapSection
-title="Spammable Chains"
-traps={spammable}
-/>
+<SpamSection spam={spam}/>
 
 )}
 
