@@ -2,250 +2,196 @@ let words = []
 
 const index = new Map()
 
-const banned = [
-  "s",
-  "es",
-  "ed",
-  "er",
-  "ers",
-  "ing",
-  "ings",
-  "ly"
-]
-
-const spamEndings = [
-
-  "ters",
-  "setter",
-  "seller",
-  "raph",
-  "graph",
-  "grapher",
-  "ally",
-  "ically",
-  "ality",
-  "alism",
-  "ation",
-  "ations",
-  "izer",
-  "izers",
-  "iness",
-  "inesses",
-  "ines",
-  "eines",
-  "eise",
-  "heimer",
-  "stein",
-  "ology",
-  "ologist",
-  "ologists",
-  "arium",
-  "ariums",
-  "esque",
-  "esques",
-  "scape",
-  "scapes",
-  "storm",
-  "caster",
-  "casters",
-  "blade",
-  "blades",
-  "smith",
-  "smiths",
-  "craft",
-  "crafter",
-  "crafters",
-  "mancer",
-  "mancers",
-  "phobia",
-  "phobias",
-  "phile",
-  "philes",
-  "verse",
-  "verses",
-  "zilla",
-  "tron",
-  "topia",
-  "topiae",
-  "topia",
-  "topiae",
-  "topia",
-  "topiae",
-  "topia",
-  "ream",
-  "lers",
-  "omo",
-  "hm",
-  "eaux",
-  "tion",
-  "sion",
-  "cious",
-  "tious",
-  "gasm",
-  "gasms",
-  "tainment",
-  "tainments",
-  "tainmental",
-  "tainmentally"
-
-]
-
-function buildIndex(){
-
-  for(const word of words){
-
-    if(word.length < 3) continue
-
-    for(let i=1;i<=8;i++){
-
-      if(word.length < i) break
-
-      const key = word.slice(0,i)
-
-      if(!index.has(key)){
-        index.set(key,[])
-      }
-
-      index.get(key).push(word)
-
-    }
-
-  }
-
-}
-
-function sortWords(arr){
-
-  return [...arr].sort((a,b)=>{
-
-    if(a.length !== b.length){
-      return a.length - b.length
-    }
-
-    return a.localeCompare(b)
-
-  })
-
-}
-
-function search(start,end=""){
-
-  let results = []
-
-  if(start){
-
-    results = index.get(start) || []
-
-  }else{
-
-    results = words
-
-  }
-
-  results = results.filter(w=>w.length >= 3)
-
-  if(end){
-
-    results = results.filter(w=>w.endsWith(end))
-
-  }
-
-  return sortWords(results).slice(0,30)
-
-}
-
-function isFakeTrap(trap,word){
-
-  if(word === trap){
-    return true
-  }
-
-  if(word.length - trap.length <= 2){
-    return true
-  }
-
-  for(const b of banned){
-
-    if(word === trap + b){
-      return true
-    }
-
-  }
-
-  return false
-
-}
-
-function getResponses(trap){
-
-  const list = index.get(trap) || []
-
-  const valid = []
+function buildIndex(list){
 
   for(const w of list){
 
     if(w.length < 3) continue
 
-    if(isFakeTrap(trap,w)){
-      return []
-    }
+    for(let i=1;i<=6;i++){
 
-    valid.push(w)
+      if(w.length < i) break
 
-    if(valid.length > 7){
-      return []
+      const p = w.slice(0,i)
+
+      if(!index.has(p)){
+        index.set(p,[])
+      }
+
+      index.get(p).push(w)
+
     }
 
   }
 
-  return sortWords(valid)
+}
+
+function shuffleArray(arr){
+
+  const a = [...arr]
+
+  for(let i=a.length-1;i>0;i--){
+
+    const j = Math.floor(Math.random()*(i+1))
+
+    ;[a[i],a[j]] = [a[j],a[i]]
+
+  }
+
+  return a
 
 }
 
-function buildTraps(prefix,len,max=7){
+function shuffleSameLength(words){
+
+  const groups = new Map()
+
+  for(const w of words){
+
+    const len = w.length
+
+    if(!groups.has(len)){
+      groups.set(len,[])
+    }
+
+    groups.get(len).push(w)
+
+  }
+
+  const result = []
+
+  const lengths = [...groups.keys()].sort((a,b)=>a-b)
+
+  for(const len of lengths){
+
+    const arr = shuffleArray(groups.get(len))
+
+    result.push(...arr)
+
+  }
+
+  return result
+
+}
+
+function sortWords(words){
+
+  return shuffleSameLength(
+
+    [...new Set(words)]
+      .filter(w => w.length >= 3)
+      .sort((a,b)=>a.length-b.length)
+
+  )
+
+}
+
+function search(query){
+
+  const raw = query.trim()
+
+  if(raw.startsWith(" ")){
+
+    const suffix = raw.trim()
+
+    const results = []
+
+    for(const w of words){
+
+      if(w.endsWith(suffix)){
+        results.push(w)
+      }
+
+      if(results.length >= 80) break
+
+    }
+
+    return sortWords(results)
+
+  }
+
+  const parts = raw.split(" ")
+
+  const prefix = parts[0] || ""
+  const suffix = parts[1] || ""
+
+  let results = index.get(prefix) || []
+
+  if(suffix){
+
+    results = results.filter(w => w.endsWith(suffix))
+
+  }
+
+  return sortWords(results)
+
+}
+
+function getResponses(trap){
+
+  const responses = index.get(trap) || []
+
+  return responses.filter(w => {
+
+    if(w === trap) return false
+
+    if(w.length <= trap.length + 2) return false
+
+    if(
+      w === trap + "s" ||
+      w === trap + "es" ||
+      w === trap + "ed" ||
+      w === trap + "er" ||
+      w === trap + "d" ||
+      w === trap + "r"
+    ){
+      return false
+    }
+
+    return true
+
+  })
+
+}
+
+function buildTraps(prefix,len,min,max){
 
   const playable = index.get(prefix) || []
 
-  const out = []
+  const trapMap = new Map()
 
-  const used = new Set()
+  for(const word of playable.slice(0,700)){
 
-  for(const playWord of playable.slice(0,220)){
+    if(word.length <= prefix.length + len) continue
 
-    if(playWord.length <= prefix.length + len){
-      continue
-    }
+    const trap = word.slice(-len)
 
-    const trap = playWord.slice(-len)
-
-    if(trap.length < 3){
-      continue
-    }
-
-    if(used.has(trap)){
-      continue
-    }
-
-    used.add(trap)
+    if(trap.length < len) continue
 
     const responses = getResponses(trap)
 
     if(
-      responses.length > 0 &&
+      responses.length >= min &&
       responses.length <= max
     ){
 
-      out.push({
-        play:playWord,
-        trap,
-        solutions:responses
-      })
+      if(!trapMap.has(trap)){
+
+        trapMap.set(trap,{
+          play: word,
+          ending: trap,
+          solutions: sortWords(responses).slice(0,6)
+        })
+
+      }
 
     }
 
   }
 
-  return out
+  return shuffleSameLength(
+    [...trapMap.values()]
+  ).slice(0,10)
 
 }
 
@@ -315,7 +261,9 @@ function buildSpam(prefix){
   }
 
   for(const key in categories){
+
     categories[key] = sortWords(categories[key])
+
   }
 
   const order = [
@@ -370,9 +318,9 @@ self.onmessage = e =>{
 
     words = payload
       .map(w=>w.trim().toLowerCase())
-      .filter(w=>w.length >= 3)
+      .filter(w => w.length >= 3)
 
-    buildIndex()
+    buildIndex(words)
 
     return
 
@@ -380,53 +328,28 @@ self.onmessage = e =>{
 
   if(type==="SEARCH"){
 
-    const raw = payload.toLowerCase()
+    const prefix = payload.toLowerCase()
 
-    let start = ""
-    let end = ""
+    const results = search(prefix).slice(0,30)
 
-    if(raw.startsWith(" ")){
+    const traps3 = buildTraps(prefix,3,1,7)
+    const traps4 = buildTraps(prefix,4,1,7)
 
-      end = raw.trim()
+    const best = [
+      ...buildTraps(prefix,3,1,1),
+      ...buildTraps(prefix,4,1,1)
+    ].slice(0,20)
 
-    }else{
-
-      const parts = raw.split(" ")
-
-      start = parts[0] || ""
-      end = parts[1] || ""
-
-    }
-
-    const results = search(start,end)
-
-    let traps3 = []
-    let traps4 = []
-    let best = []
-
-    if(start){
-
-      traps3 = buildTraps(start,3).slice(0,10)
-
-      traps4 = buildTraps(start,4).slice(0,10)
-
-      best = [
-        ...buildTraps(start,3,1),
-        ...buildTraps(start,4,1)
-      ].slice(0,10)
-
-    }
-
-    const spam = start
-      ? buildSpam(start)
-      : []
+    const spam = buildSpam(prefix)
 
     postMessage({
+
       results,
-      best,
       traps3,
       traps4,
+      best,
       spam
+
     })
 
   }
