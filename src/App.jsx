@@ -7,111 +7,125 @@ import SpamSection from "./components/SpamSection"
 
 export default function App(){
 
-const worker = useRef(null)
+  const worker = useRef(null)
 
-const [results,setResults] = useState([])
+  const [results,setResults] = useState([])
 
-const [best,setBest] = useState([])
-const [traps3,setTraps3] = useState([])
-const [traps4,setTraps4] = useState([])
+  const [trap3,setTrap3] = useState([])
+  const [trap4,setTrap4] = useState([])
 
-const [spam,setSpam] = useState([])
+  const [spam,setSpam] = useState([])
 
-useEffect(()=>{
+  const [mode,setMode] = useState("normal")
 
-worker.current = new Worker(
-new URL("./worker/searchWorker.js",import.meta.url),
-{type:"module"}
-)
+  useEffect(()=>{
 
-worker.current.onmessage = e =>{
+    worker.current = new Worker(
+      new URL("./worker/searchWorker.js",import.meta.url),
+      {type:"module"}
+    )
 
-const {
-results,
-best,
-traps3,
-traps4,
-spam
-} = e.data
+    worker.current.onmessage = e =>{
 
-setResults(results || [])
+      const {
+        results,
+        traps3,
+        traps4,
+        spam
+      } = e.data
 
-setBest(best || [])
-setTraps3(traps3 || [])
-setTraps4(traps4 || [])
+      setResults(results || [])
 
-setSpam(spam || [])
+      setTrap3(traps3 || [])
+      setTrap4(traps4 || [])
 
-}
+      setSpam(spam || [])
 
-fetch("/alphawords.txt")
-.then(r=>r.text())
-.then(text=>{
+    }
 
-const words = text
-.split("\n")
-.map(w=>w.trim().toLowerCase())
-.filter(w=>w.length >= 3)
+    fetch("/alphawords.txt")
+    .then(r=>r.text())
+    .then(text=>{
 
-worker.current.postMessage({
-type:"LOAD_WORDS",
-payload:words
-})
+      const words = text
+        .split("\n")
+        .map(w=>w.trim())
+        .filter(Boolean)
 
-})
+      worker.current.postMessage({
+        type:"LOAD_WORDS",
+        payload:words
+      })
 
-return ()=>{
+    })
 
-if(worker.current){
-worker.current.terminate()
-}
+  },[])
 
-}
+  function handleSearch(q){
 
-},[])
+    worker.current.postMessage({
+      type:"SEARCH",
+      payload:q.toLowerCase()
+    })
 
-function handleSearch(q){
+  }
 
-if(!worker.current) return
+  return(
 
-worker.current.postMessage({
-type:"SEARCH",
-payload:q.toLowerCase()
-})
+    <div className="app">
 
-}
+      <h1>Word Trap Solver</h1>
 
-return(
+      <div className="mode-buttons">
 
-<div className="app">
+        <button
+          className={mode==="normal" ? "active" : ""}
+          onClick={()=>setMode("normal")}
+        >
+          Normal
+        </button>
 
-<h1>Word Trap Solver</h1>
+        <button
+          className={mode==="spam" ? "active" : ""}
+          onClick={()=>setMode("spam")}
+        >
+          Spam
+        </button>
 
-<SearchBar onSearch={handleSearch}/>
+      </div>
 
-<h2>Words</h2>
+      <SearchBar onSearch={handleSearch}/>
 
-<WordList words={results}/>
+      <WordList words={results}/>
 
-<TrapSection
-title="Best Traps"
-traps={best}
-/>
+      {mode==="normal" && (
 
-<TrapSection
-title="3 Letter Traps"
-traps={traps3}
-/>
+        <div className="compact-traps">
 
-<TrapSection
-title="4 Letter Traps"
-traps={traps4}
-/>
+          <TrapSection
+            title="3 Letter Traps"
+            traps={trap3}
+            compact={true}
+          />
 
-<SpamSection spam={spam}/>
+          <TrapSection
+            title="4 Letter Traps"
+            traps={trap4}
+            compact={true}
+          />
 
-</div>
+        </div>
 
-)
+      )}
+
+      {mode==="spam" && (
+
+        <SpamSection spam={spam}/>
+
+      )}
+
+    </div>
+
+  )
 
 }

@@ -1,56 +1,77 @@
 export default function TrapSection({
-title,
-traps=[]
+
+  title,
+  traps=[],
+  compact=false
+
 }){
 
-if(traps.length===0){
-return null
-}
+  return(
 
-return(
+    <div className="section">
 
-<div className="section">
+      <div className="section-header">
 
-<div className="section-header">
+        <span>{title}</span>
 
-<span>{title}</span>
+        <span className="count">
+          {traps.length}
+        </span>
 
-<span className="count">
-{traps.length} traps
-</span>
+      </div>
 
-</div>
+      <div className={
+        compact
+        ? "compact-grid"
+        : "trap-grid"
+      }>
 
-<div className="trap-grid">
+        {traps.map((t,i)=>(
 
-{traps.map((t,i)=>(
+          <div
+            key={i}
+            className="mini-trap"
+          >
 
-<div key={i} className="trap-card">
+            <div className="mini-play">
 
-<span className="trap-label">
+              <span className="play-word">
+                {t.play}
+              </span>
 
-{t.play}
+              <span className="arrow">
+                →
+              </span>
 
-</span>
+              <span className="trap-end">
+                {t.ending}
+              </span>
 
-<span className="arrow">
-→
-</span>
+            </div>
 
-<span className="trap-end">
+            <div className="mini-solves">
 
-{t.trap}
+              {t.solutions.map((w,j)=>(
 
-</span>
+                <span
+                  key={j}
+                  className="word"
+                >
+                  {w}
+                </span>
 
-</div>
+              ))}
 
-))}
+            </div>
 
-</div>
+          </div>
 
-</div>
+        ))}
 
-)
+      </div>
+
+    </div>
+
+  )
 
 }

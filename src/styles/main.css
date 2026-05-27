@@ -376,3 +376,77 @@ cursor:pointer;
 .mode-buttons button:hover{
 background:#2f4b7c;
 }
+.compact-grid{
+
+  display:grid;
+
+  grid-template-columns:
+  repeat(auto-fit,minmax(260px,1fr));
+
+  gap:12px;
+
+  margin-top:12px;
+
+}
+
+.mini-trap{
+
+  background:#13203a;
+
+  border-radius:10px;
+
+  padding:10px;
+
+}
+
+.mini-play{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  margin-bottom:8px;
+
+  flex-wrap:wrap;
+
+}
+
+.play-word{
+
+  background:#38bdf8;
+
+  color:white;
+
+  padding:6px 10px;
+
+  border-radius:8px;
+
+  font-weight:700;
+
+}
+
+.trap-end{
+
+  color:#93c5fd;
+
+  font-weight:700;
+
+}
+
+.arrow{
+
+  color:white;
+
+}
+
+.mini-solves{
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:6px;
+
+}
