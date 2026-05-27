@@ -450,3 +450,20 @@ background:#2f4b7c;
   gap:6px;
 
 }
+body{
+
+background:transparent !important;
+
+}
+
+.app{
+
+background:rgba(10,10,20,0.75);
+
+backdrop-filter:blur(10px);
+
+border-radius:15px;
+
+padding:15px;
+
+}

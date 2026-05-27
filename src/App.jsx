@@ -7,125 +7,199 @@ import SpamSection from "./components/SpamSection"
 
 export default function App(){
 
-  const worker = useRef(null)
+const worker = useRef(null)
 
-  const [results,setResults] = useState([])
+const [mode,setMode] = useState("normal")
 
-  const [trap3,setTrap3] = useState([])
-  const [trap4,setTrap4] = useState([])
+const [results,setResults] = useState([])
 
-  const [spam,setSpam] = useState([])
+const [traps3,setTraps3] = useState([])
+const [traps4,setTraps4] = useState([])
 
-  const [mode,setMode] = useState("normal")
+const [spamChains,setSpamChains] = useState([])
 
-  useEffect(()=>{
+const [ocrWord,setOCRWord] = useState("")
 
-    worker.current = new Worker(
-      new URL("./worker/searchWorker.js",import.meta.url),
-      {type:"module"}
-    )
+useEffect(()=>{
 
-    worker.current.onmessage = e =>{
+worker.current = new Worker(
+new URL("./worker/searchWorker.js",import.meta.url),
+{type:"module"}
+)
 
-      const {
-        results,
-        traps3,
-        traps4,
-        spam
-      } = e.data
+worker.current.onmessage = e =>{
 
-      setResults(results || [])
+const {
+results,
+traps3,
+traps4,
+spamChains
+} = e.data
 
-      setTrap3(traps3 || [])
-      setTrap4(traps4 || [])
+setResults(results || [])
 
-      setSpam(spam || [])
+setTraps3(traps3 || [])
+setTraps4(traps4 || [])
 
-    }
+setSpamChains(spamChains || [])
 
-    fetch("/alphawords.txt")
-    .then(r=>r.text())
-    .then(text=>{
+}
 
-      const words = text
-        .split("\n")
-        .map(w=>w.trim())
-        .filter(Boolean)
+async function loadWords(){
 
-      worker.current.postMessage({
-        type:"LOAD_WORDS",
-        payload:words
-      })
+const text = await fetch("/alphawords.txt")
+.then(r=>r.text())
 
-    })
+const words = text
+.split("\n")
+.map(w=>w.trim().toLowerCase())
+.filter(w=>w.length >= 3)
 
-  },[])
+worker.current.postMessage({
+type:"LOAD",
+payload:words
+})
 
-  function handleSearch(q){
+}
 
-    worker.current.postMessage({
-      type:"SEARCH",
-      payload:q.toLowerCase()
-    })
+loadWords()
 
-  }
+},[])
 
-  return(
+useEffect(()=>{
 
-    <div className="app">
+if(window.electronAPI){
 
-      <h1>Word Trap Solver</h1>
+window.electronAPI.onOCR(word=>{
 
-      <div className="mode-buttons">
+if(!word) return
 
-        <button
-          className={mode==="normal" ? "active" : ""}
-          onClick={()=>setMode("normal")}
-        >
-          Normal
-        </button>
+setOCRWord(word)
 
-        <button
-          className={mode==="spam" ? "active" : ""}
-          onClick={()=>setMode("spam")}
-        >
-          Spam
-        </button>
+handleSearch(word)
 
-      </div>
+})
 
-      <SearchBar onSearch={handleSearch}/>
+}
 
-      <WordList words={results}/>
+},[])
 
-      {mode==="normal" && (
+function handleSearch(q){
 
-        <div className="compact-traps">
+if(!worker.current) return
 
-          <TrapSection
-            title="3 Letter Traps"
-            traps={trap3}
-            compact={true}
-          />
+worker.current.postMessage({
 
-          <TrapSection
-            title="4 Letter Traps"
-            traps={trap4}
-            compact={true}
-          />
+type:"SEARCH",
 
-        </div>
+payload:{
+query:q.toLowerCase(),
+mode
+}
 
-      )}
+})
 
-      {mode==="spam" && (
+}
 
-        <SpamSection spam={spam}/>
+return(
 
-      )}
+<div className="app overlay-mode">
 
-    </div>
+<h1 className="title">
+Word Trap Solver
+</h1>
 
-  )
+<div className="mode-switch">
+
+<button
+className={mode==="normal" ? "active" : ""}
+onClick={()=>setMode("normal")}
+>
+Normal
+</button>
+
+<button
+className={mode==="spam" ? "active" : ""}
+onClick={()=>setMode("spam")}
+>
+Spam
+</button>
+
+</div>
+
+<SearchBar
+onSearch={handleSearch}
+/>
+
+{ocrWord && (
+
+<div className="ocr-live">
+
+LIVE:
+<span>{ocrWord}</span>
+
+</div>
+
+)}
+
+<div className="compact-area">
+
+<div className="compact-block">
+
+<h2>
+Words
+</h2>
+
+<WordList words={results}/>
+
+</div>
+
+{mode==="normal" && (
+
+<>
+
+<div className="compact-block">
+
+<h2>
+3 Letter Traps
+</h2>
+
+<TrapSection traps={traps3}/>
+
+</div>
+
+<div className="compact-block">
+
+<h2>
+4 Letter Traps
+</h2>
+
+<TrapSection traps={traps4}/>
+
+</div>
+
+</>
+
+)}
+
+{mode==="spam" && (
+
+<div className="compact-block">
+
+<h2>
+Spammable Chains
+</h2>
+
+<SpamSection chains={spamChains}/>
+
+</div>
+
+)}
+
+</div>
+
+</div>
+
+)
 
 }
