@@ -1,23 +1,21 @@
-export default function WordList({ words }) {
+export default function WordList({ words = [] }){
 
-  return (
+return(
 
-    <div className="section">
+<div className="list">
 
-      <h2>Words</h2>
+{words
+.filter(w=>w.length >= 3)
+.map((w,i)=>(
 
-      <div className="list">
+<span key={i} className="word">
+{w}
+</span>
 
-        {words.map((w,i) => (
-          <span key={i} className="word">
-            {w}
-          </span>
-        ))}
+))}
 
-      </div>
+</div>
 
-    </div>
-
-  )
+)
 
 }

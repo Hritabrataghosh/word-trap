@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react"
 import SearchBar from "./components/SearchBar"
 import WordList from "./components/WordList"
 import TrapSection from "./components/TrapSection"
-import SpamSection from "./components/SpamSection"
 
 export default function App(){
 
@@ -11,13 +10,9 @@ const worker = useRef(null)
 
 const [results,setResults] = useState([])
 
+const [best,setBest] = useState([])
 const [traps3,setTraps3] = useState([])
 const [traps4,setTraps4] = useState([])
-const [best,setBest] = useState([])
-
-const [spam,setSpam] = useState([])
-
-const [mode,setMode] = useState("normal")
 
 useEffect(()=>{
 
@@ -30,19 +25,16 @@ worker.current.onmessage = e =>{
 
 const {
 results,
-traps3,
-traps4,
 best,
-spam
+traps3,
+traps4
 } = e.data
 
 setResults(results || [])
 
+setBest(best || [])
 setTraps3(traps3 || [])
 setTraps4(traps4 || [])
-setBest(best || [])
-
-setSpam(spam || [])
 
 }
 
@@ -52,8 +44,8 @@ fetch("/alphawords.txt")
 
 const words = text
 .split("\n")
-.map(w=>w.trim())
-.filter(Boolean)
+.map(w=>w.trim().toLowerCase())
+.filter(w=>w.length >= 3)
 
 worker.current.postMessage({
 type:"LOAD_WORDS",
@@ -79,33 +71,11 @@ return(
 
 <h1>Word Trap Solver</h1>
 
-<div className="mode-buttons">
-
-<button
-onClick={()=>setMode("normal")}
-className={mode==="normal" ? "active" : ""}
->
-Normal
-</button>
-
-<button
-onClick={()=>setMode("spam")}
-className={mode==="spam" ? "active" : ""}
->
-Spam
-</button>
-
-</div>
-
 <SearchBar onSearch={handleSearch}/>
 
 <h2>Words</h2>
 
 <WordList words={results}/>
-
-{mode==="normal" && (
-
-<>
 
 <TrapSection
 title="Best Traps"
@@ -121,16 +91,6 @@ traps={traps3}
 title="4 Letter Traps"
 traps={traps4}
 />
-
-</>
-
-)}
-
-{mode==="spam" && (
-
-<SpamSection spam={spam}/>
-
-)}
 
 </div>
 

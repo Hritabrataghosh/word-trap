@@ -2,7 +2,7 @@ let words = []
 
 const index = new Map()
 
-const bannedEndings = [
+const banned = [
   "s",
   "es",
   "ed",
@@ -10,28 +10,26 @@ const bannedEndings = [
   "ers",
   "ing",
   "ings",
-  "ly",
-  "d",
-  "r"
+  "ly"
 ]
 
 function buildIndex(){
 
-  for(const w of words){
+  for(const word of words){
 
-    if(w.length < 3) continue
+    if(word.length < 3) continue
 
     for(let i=1;i<=8;i++){
 
-      if(w.length < i) break
+      if(word.length < i) break
 
-      const p = w.slice(0,i)
+      const key = word.slice(0,i)
 
-      if(!index.has(p)){
-        index.set(p,[])
+      if(!index.has(key)){
+        index.set(key,[])
       }
 
-      index.get(p).push(w)
+      index.get(key).push(word)
 
     }
 
@@ -67,15 +65,17 @@ function search(start,end=""){
 
 }
 
-function invalidSolve(trap,word){
+function isFakeTrap(trap,word){
 
-  if(word === trap) return true
+  if(word === trap){
+    return true
+  }
 
   if(word.length - trap.length <= 2){
     return true
   }
 
-  for(const b of bannedEndings){
+  for(const b of banned){
 
     if(word === trap + b){
       return true
@@ -91,23 +91,37 @@ function getResponses(trap){
 
   const list = index.get(trap) || []
 
-  return list.filter(w=>{
+  const valid = []
 
-    if(w.length < 3) return false
+  for(const w of list){
 
-    return !invalidSolve(trap,w)
+    if(w.length < 3) continue
 
-  })
+    if(isFakeTrap(trap,w)){
+      return []
+    }
+
+    valid.push(w)
+
+    if(valid.length > 7){
+      return []
+    }
+
+  }
+
+  return valid
 
 }
 
-function buildTraps(prefix,len,maxSolves=7){
+function buildTraps(prefix,len,max=7){
 
   const playable = index.get(prefix) || []
 
-  const trapMap = new Map()
+  const out = []
 
-  for(const word of playable.slice(0,250)){
+  const used = new Set()
+
+  for(const word of playable.slice(0,120)){
 
     if(word.length <= prefix.length + len){
       continue
@@ -119,76 +133,34 @@ function buildTraps(prefix,len,maxSolves=7){
       continue
     }
 
-    if(trapMap.has(trap)){
+    if(used.has(trap)){
       continue
     }
+
+    used.add(trap)
 
     const responses = getResponses(trap)
 
     if(
       responses.length > 0 &&
-      responses.length <= maxSolves
+      responses.length <= max
     ){
 
-      trapMap.set(trap,{
+      out.push({
         ending:trap,
         word,
-        solutions:sortWords(responses).slice(0,6)
+        solutions:sortWords(responses)
       })
 
     }
 
-  }
-
-  return Array.from(trapMap.values())
-  .sort((a,b)=>{
-
-    if(a.solutions.length !== b.solutions.length){
-      return a.solutions.length - b.solutions.length
-    }
-
-    return a.word.length - b.word.length
-
-  })
-
-}
-
-function buildSpam(prefix){
-
-  const spamEndings = [
-    "ters",
-    "raph",
-    "ally",
-    "ines",
-    "eise",
-    "ream",
-    "lers",
-    "hm",
-    "omo"
-  ]
-
-  const playable = index.get(prefix) || []
-
-  const spam = []
-
-  for(const word of playable.slice(0,400)){
-
-    for(const e of spamEndings){
-
-      if(word.endsWith(e)){
-
-        spam.push({
-          ending:e,
-          word
-        })
-
-      }
-
+    if(out.length >= 10){
+      break
     }
 
   }
 
-  return spam.slice(0,25)
+  return out
 
 }
 
@@ -198,9 +170,7 @@ self.onmessage = e =>{
 
   if(type==="LOAD_WORDS"){
 
-    words = payload
-      .map(w=>w.trim().toLowerCase())
-      .filter(w=>w.length >= 3)
+    words = payload.filter(w=>w.length >= 3)
 
     buildIndex()
 
@@ -219,23 +189,20 @@ self.onmessage = e =>{
 
     const results = search(start,end)
 
-    const traps3 = buildTraps(start,3).slice(0,10)
+    const traps3 = buildTraps(start,3)
 
-    const traps4 = buildTraps(start,4).slice(0,10)
+    const traps4 = buildTraps(start,4)
 
     const best = [
       ...buildTraps(start,3,2),
       ...buildTraps(start,4,2)
-    ].slice(0,20)
-
-    const spam = buildSpam(start)
+    ].slice(0,15)
 
     postMessage({
       results,
-      traps3,
-      traps4,
       best,
-      spam
+      traps3,
+      traps4
     })
 
   }
