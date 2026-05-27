@@ -1,147 +1,153 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect,useRef,useState } from "react"
 import SearchBar from "./components/SearchBar"
 import WordList from "./components/WordList"
 import TrapSection from "./components/TrapSection"
 
 export default function App(){
 
-  const worker = useRef(null)
+const worker = useRef(null)
 
-  const [commonResults,setCommonResults] = useState([])
-  const [extraResults,setExtraResults] = useState([])
+const [mode,setMode] = useState("normal")
 
-  const [trap3,setTrap3] = useState([])
-  const [trap4,setTrap4] = useState([])
+const [commonResults,setCommonResults] = useState([])
+const [extraResults,setExtraResults] = useState([])
 
-  const [best,setBest] = useState([])
-  const [spammable,setSpammable] = useState([])
+const [trap3,setTrap3] = useState([])
+const [trap4,setTrap4] = useState([])
 
-  const [bestMove,setBestMove] = useState(null)
-  const [spamMove,setSpamMove] = useState(null)
+const [best,setBest] = useState([])
+const [spammable,setSpammable] = useState([])
 
-  // 🔹 INIT WORKER
-  useEffect(()=>{
+useEffect(()=>{
 
-    worker.current = new Worker(
-      new URL("./worker/searchWorker.js",import.meta.url),
-      {type:"module"}
-    )
+worker.current = new Worker(
+new URL("./worker/searchWorker.js",import.meta.url),
+{type:"module"}
+)
 
-    worker.current.onmessage = e =>{
+worker.current.onmessage = e=>{
 
-      const {
-        resultsCommon,
-        resultsExtra,
-        traps3,
-        traps4,
-        best,
-        spammable
-      } = e.data
+const {
+resultsCommon,
+resultsExtra,
+traps3,
+traps4,
+best,
+spammable
+} = e.data
 
-      setCommonResults(resultsCommon || [])
-      setExtraResults(resultsExtra || [])
+setCommonResults(resultsCommon||[])
+setExtraResults(resultsExtra||[])
 
-      setTrap3(traps3 || [])
-      setTrap4(traps4 || [])
+setTrap3(traps3||[])
+setTrap4(traps4||[])
 
-      setBest(best || [])
-      setSpammable(spammable || [])
+setBest(best||[])
+setSpammable(spammable||[])
 
-      // 🔥 PICK BEST PLAY WORD (not just trap)
-      setBestMove(best?.[0]?.plays?.[0] || null)
-      setSpamMove(spammable?.[0]?.plays?.[0] || null)
+}
 
-    }
+async function load(){
 
-    async function load(){
+const common =
+await fetch("/alphawords.txt")
+.then(r=>r.text())
 
-      const common = await fetch("/alphawords.txt").then(r=>r.text())
-      const extra = await fetch("/extra_words.txt").then(r=>r.text())
+const extra =
+await fetch("/extra_words.txt")
+.then(r=>r.text())
 
-      worker.current.postMessage({
-        type:"LOAD_COMMON",
-        payload: common.split("\n").map(w=>w.trim()).filter(Boolean)
-      })
+worker.current.postMessage({
+type:"LOAD_COMMON",
+payload:common.split("\n")
+})
 
-      worker.current.postMessage({
-        type:"LOAD_EXTRA",
-        payload: extra.split("\n").map(w=>w.trim()).filter(Boolean)
-      })
+worker.current.postMessage({
+type:"LOAD_EXTRA",
+payload:extra.split("\n")
+})
 
-    }
+}
 
-    load()
+load()
 
-  },[])
+},[])
 
-  // 🔹 SEARCH
-  function handleSearch(q){
+function handleSearch(q){
 
-    setBestMove(null)
-    setSpamMove(null)
+worker.current.postMessage({
+type:"SEARCH",
+payload:q.toLowerCase()
+})
 
-    worker.current.postMessage({
-      type:"SEARCH",
-      payload:q.toLowerCase()
-    })
+}
 
-  }
+return(
 
-  // 🔹 COPY HELPER
-  function copy(text){
-    navigator.clipboard.writeText(text)
-  }
+<div className="app">
 
-  return(
+<h1>Word Trap Solver</h1>
 
-    <div className="app">
+<div className="mode-buttons">
 
-      <h1>Word Trap Solver</h1>
+<button
+onClick={()=>setMode("normal")}
+>
+Normal
+</button>
 
-      {/* 🔥 TOP ACTION BAR */}
-      <div className="quick-panel-top">
+<button
+onClick={()=>setMode("spam")}
+>
+Spam
+</button>
 
-        {bestMove && (
-          <button
-            className="best-btn"
-            onClick={()=>copy(bestMove)}
-          >
-            🧨 Best: {bestMove}
-          </button>
-        )}
+</div>
 
-        {spamMove && (
-          <button
-            className="spam-btn"
-            onClick={()=>copy(spamMove)}
-          >
-            🔁 Spam: {spamMove}
-          </button>
-        )}
+<SearchBar onSearch={handleSearch}/>
 
-      </div>
+<h2>Common Words</h2>
+<WordList words={commonResults}/>
 
-      <SearchBar onSearch={handleSearch}/>
+{extraResults.length>0 && (
+<>
+<h2>Uncommon Words</h2>
+<WordList words={extraResults}/>
+</>
+)}
 
-      {/* WORDS */}
-      <h2>Common Words</h2>
-      <WordList words={commonResults}/>
+{mode==="normal" && (
+<>
 
-      {extraResults.length > 0 && (
-        <>
-          <h2>Uncommon Words</h2>
-          <WordList words={extraResults}/>
-        </>
-      )}
+<TrapSection
+title="Best Traps"
+traps={best}
+/>
 
-      {/* TRAPS */}
-      <TrapSection title="Best Traps" traps={best}/>
-      <TrapSection title="Spammable Traps" traps={spammable}/>
-      <TrapSection title="3 Letter Traps" traps={trap3}/>
-      <TrapSection title="4 Letter Traps" traps={trap4}/>
+<TrapSection
+title="3 Letter Traps"
+traps={trap3}
+/>
 
-    </div>
+<TrapSection
+title="4 Letter Traps"
+traps={trap4}
+/>
 
-  )
+</>
+)}
+
+{mode==="spam" && (
+
+<TrapSection
+title="Spammable Chains"
+traps={spammable}
+/>
+
+)}
+
+</div>
+
+)
 
 }

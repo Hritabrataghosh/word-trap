@@ -358,3 +358,21 @@ font-size:13px;
 .spam-btn:hover{
   background:#0099cc;
 }
+.mode-buttons{
+display:flex;
+gap:10px;
+margin-bottom:15px;
+}
+
+.mode-buttons button{
+padding:8px 15px;
+background:#1e2b45;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+.mode-buttons button:hover{
+background:#2f4b7c;
+}

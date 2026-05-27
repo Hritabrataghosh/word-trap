@@ -5,12 +5,26 @@ const commonIndex = new Map()
 const extraIndex = new Map()
 const allIndex = new Map()
 
-// ---------------- BUILD INDEX ----------------
+const spamCategories = [
+  "ters",
+  "ally",
+  "omo",
+  "ler",
+  "raph",
+  "ines",
+  "hm",
+  "eise",
+  "ream",
+  "enders"
+]
+
+// ---------------- INDEX ----------------
+
 function buildIndex(words,map){
 
   for(const w of words){
 
-    for(let i=1;i<=4;i++){
+    for(let i=1;i<=6;i++){
 
       if(w.length < i) break
 
@@ -29,21 +43,27 @@ function buildIndex(words,map){
 }
 
 // ---------------- MERGE ----------------
+
 function mergeIndexes(){
 
   for(const [k,v] of commonIndex){
+
     if(!allIndex.has(k)) allIndex.set(k,[])
     allIndex.get(k).push(...v)
+
   }
 
   for(const [k,v] of extraIndex){
+
     if(!allIndex.has(k)) allIndex.set(k,[])
     allIndex.get(k).push(...v)
+
   }
 
 }
 
-// ---------------- QUERY PARSER ----------------
+// ---------------- QUERY ----------------
+
 function parseQuery(q){
 
   const parts = q.trim().split(/\s+/)
@@ -52,11 +72,18 @@ function parseQuery(q){
   let suffix = ""
 
   if(parts.length === 1){
-    if(q.startsWith(" ")) suffix = parts[0]
-    else prefix = parts[0]
+
+    if(q.startsWith(" ")){
+      suffix = parts[0]
+    }else{
+      prefix = parts[0]
+    }
+
   }else{
+
     prefix = parts[0]
     suffix = parts[1]
+
   }
 
   return {prefix,suffix}
@@ -64,52 +91,90 @@ function parseQuery(q){
 }
 
 // ---------------- FILTER ----------------
+
 function filterWords(words,prefix,suffix){
 
-  return words.filter(w=>{
+  return words
+  .filter(w=>{
+
     if(prefix && !w.startsWith(prefix)) return false
     if(suffix && !w.endsWith(suffix)) return false
+
     return true
+
   })
+  .sort((a,b)=>a.length-b.length)
 
 }
 
-// ---------------- RESPONSES ----------------
+// ---------------- RESPONSE ----------------
+
 function getResponses(trap,index){
 
   if(!index) return []
 
   const list = index.get(trap) || []
 
-  const invalid = new Set([
-    trap,
-    trap+"s",
-    trap+"es"
-  ])
+  return list.filter(w=>{
 
-  return list.filter(w => !invalid.has(w))
+    if(w===trap) return false
+
+    const add = w.slice(trap.length)
+
+    const commonCheap = [
+      "s",
+      "es",
+      "ed",
+      "d",
+      "er",
+      "ers",
+      "ing",
+      "ly",
+      "e"
+    ]
+
+    if(commonCheap.includes(add)) return false
+
+    return true
+
+  })
 
 }
 
-// ---------------- VALIDATION ----------------
-function validTrap(trap,responses,index){
+// ---------------- VALID TRAP ----------------
 
-  if(!index) return false
+function validTrap(trap,responses){
 
-  const list = index.get(trap) || []
+  if(responses.length===0) return false
 
-  // ❌ trap itself exists
-  if(list.includes(trap)) return false
-  if(list.includes(trap+"s")) return false
-  if(list.includes(trap+"es")) return false
+  // STRICT AUTO VALID
+  const allBig = responses.every(
+    r=>r.length >= trap.length+3
+  )
 
-  if(responses.length === 0 || responses.length > 7) return false
+  if(allBig) return true
 
-  // ❌ enforce +3 rule STRICTLY
+  // SMALL EXTENSION CHECK
   for(const r of responses){
-    if(r.length < trap.length + 3){
+
+    const add = r.slice(trap.length)
+
+    const cheap = [
+      "s",
+      "es",
+      "ed",
+      "d",
+      "er",
+      "ers",
+      "e",
+      "ly",
+      "ing"
+    ]
+
+    if(cheap.includes(add)){
       return false
     }
+
   }
 
   return true
@@ -117,6 +182,7 @@ function validTrap(trap,responses,index){
 }
 
 // ---------------- BUILD TRAPS ----------------
+
 function buildTraps(prefix,len,index){
 
   if(!index || !prefix) return []
@@ -133,13 +199,15 @@ function buildTraps(prefix,len,index){
 
     const responses = getResponses(trap,index)
 
-    if(!validTrap(trap,responses,index)) continue
+    if(!validTrap(trap,responses)) continue
 
     if(!trapMap.has(trap)){
 
       trapMap.set(trap,{
         ending:trap,
-        solutions:responses.slice(0,6),
+        solutions:responses
+        .sort((a,b)=>a.length-b.length)
+        .slice(0,6),
         plays:[]
       })
 
@@ -149,112 +217,114 @@ function buildTraps(prefix,len,index){
 
   }
 
-  return Array.from(trapMap.values())
+  return Array
+  .from(trapMap.values())
+  .sort((a,b)=>a.solutions.length-b.solutions.length)
 
 }
 
-// ---------------- SPAMMABLE ----------------
-function buildSpammable(prefix,index){
+// ---------------- SPAMS ----------------
 
-  if(!index || !prefix) return []
+function buildSpam(prefix,index){
+
+  if(!prefix) return []
 
   const playable = index.get(prefix) || []
 
-  const trapMap = new Map()
+  const result = []
 
   for(const word of playable){
 
-    if(word.length <= prefix.length + 3) continue
+    for(const spam of spamCategories){
 
-    const trap = word.slice(-3)
+      if(word.endsWith(spam)){
 
-    const responses = getResponses(trap,index)
+        result.push({
+          ending:spam,
+          play:word
+        })
 
-    if(responses.length < 3 || responses.length > 7) continue
-    if(!validTrap(trap,responses,index)) continue
-
-    if(!trapMap.has(trap)){
-
-      trapMap.set(trap,{
-        ending:trap,
-        solutions:responses.slice(0,6),
-        plays:[]
-      })
+      }
 
     }
 
-    trapMap.get(trap).plays.push(word)
-
   }
 
-  return Array.from(trapMap.values()).slice(0,10)
+  return result.slice(0,30)
 
 }
 
 // ---------------- MAIN ----------------
+
 self.onmessage = e=>{
 
   const {type,payload} = e.data
 
   if(type==="LOAD_COMMON"){
+
     commonWords = payload
     buildIndex(commonWords,commonIndex)
     return
+
   }
 
   if(type==="LOAD_EXTRA"){
+
     extraWords = payload
     buildIndex(extraWords,extraIndex)
     mergeIndexes()
     return
+
   }
 
   if(type==="SEARCH"){
 
     const {prefix,suffix} = parseQuery(payload)
 
-    let common = commonWords
-    let extra = extraWords
+    let common = filterWords(
+      commonWords,
+      prefix,
+      suffix
+    )
 
-    common = filterWords(common,prefix,suffix)
-    extra = filterWords(extra,prefix,suffix)
+    let extra = filterWords(
+      extraWords,
+      prefix,
+      suffix
+    )
 
     const resultsCommon = common.slice(0,30)
 
-    let resultsExtra = []
+    const resultsExtra =
+    extra.slice(0,20)
 
-    if(resultsCommon.length < 30){
-      resultsExtra = extra.slice(0,30-resultsCommon.length)
-    }
+    const traps3 =
+    buildTraps(prefix,3,commonIndex)
+    .slice(0,10)
 
-    let traps3 = []
-    let traps4 = []
-    let best = []
-    let spammable = []
+    const traps4 =
+    buildTraps(prefix,4,commonIndex)
+    .slice(0,10)
 
-    if(prefix){
+    const best = [
+      ...buildTraps(prefix,3,allIndex),
+      ...buildTraps(prefix,4,allIndex)
+    ]
+    .filter(t=>t.solutions.length<=2)
+    .slice(0,20)
 
-      traps3 = buildTraps(prefix,3,commonIndex).slice(0,10)
-      traps4 = buildTraps(prefix,4,commonIndex).slice(0,10)
-
-      best = [
-        ...buildTraps(prefix,3,allIndex),
-        ...buildTraps(prefix,4,allIndex)
-      ]
-      .filter(t => t.solutions.length <= 2)
-      .slice(0,20)
-
-      spammable = buildSpammable(prefix,allIndex)
-
-    }
+    const spammable =
+    buildSpam(prefix,allIndex)
 
     postMessage({
+
       resultsCommon,
       resultsExtra,
       traps3,
       traps4,
       best,
       spammable
+
     })
 
   }

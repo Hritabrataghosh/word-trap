@@ -1,76 +1,61 @@
-import { useState } from "react"
+export default function TrapSection({
+title,
+traps=[]
+}){
 
-export default function TrapSection({ title, traps = [] }) {
+return(
 
-  if(traps.length === 0) return null
+<div className="section">
 
-  return(
+<div className="section-header">
+{title}
+</div>
 
-    <div className="section">
+<div className="trap-grid">
 
-      <div className="section-header">
+{traps.map((t,i)=>(
 
-        <span>{title}</span>
+<div
+key={i}
+className="trap-card"
+>
 
-        <span className="count">
-          {traps.length} traps
-        </span>
+<div className="trap-label">
 
-      </div>
-
-      <div className="trap-grid">
-
-        {traps.map((t,i)=>(
-          <TrapRow key={i} trap={t}/>
-        ))}
-
-      </div>
-
-    </div>
-
-  )
-
+{t.play
+? t.play
+: `${t.ending} (${t.solutions.length})`
 }
 
-function TrapRow({trap}){
+</div>
 
-  const [expand,setExpand] = useState(false)
+{t.solutions && (
 
-  const words = expand
-  ? trap.plays
-  : trap.plays.slice(0,3)
+<div className="trap-words">
 
-  return(
+{t.solutions.map((s,j)=>(
 
-    <div className="trap-card">
+<span
+key={j}
+className="word"
+>
+{s}
+</span>
 
-      <span className="trap-label">
-        {trap.ending} ({trap.plays.length}) →
-      </span>
+))}
 
-      <div className="trap-words">
+</div>
 
-        {words.map((w,i)=>(
-          <span key={i} className="word">
-            {w}
-          </span>
-        ))}
+)}
 
-        {!expand && trap.solutions.length > 3 && (
+</div>
 
-          <span
-            className="more"
-            onClick={()=>setExpand(true)}
-          >
-            +{trap.solutions.length-3}
-          </span>
+))}
 
-        )}
+</div>
 
-      </div>
+</div>
 
-    </div>
-
-  )
+)
 
 }
