@@ -265,7 +265,7 @@ function buildSpam(prefix){
 
   }
 
-  for(const w of playable.slice(0,1200)){
+  for(const w of playable.slice(0,1500)){
 
     if(w.length < 5) continue
 
@@ -294,9 +294,7 @@ function buildSpam(prefix){
       categories.ally.push(w)
     }
 
-    if(
-      w.endsWith("omo")
-    ){
+    if(w.endsWith("omo")){
       categories.omo.push(w)
     }
 
@@ -316,32 +314,51 @@ function buildSpam(prefix){
 
   }
 
+  for(const key in categories){
+    categories[key] = sortWords(categories[key])
+  }
+
+  const order = [
+    "ters",
+    "ler",
+    "raph",
+    "ally",
+    "omo",
+    "ines",
+    "ion"
+  ]
+
   const result = []
 
-  function addSome(arr,label,max=6){
+  let round = 0
+  let added = true
 
-    const sorted = sortWords(arr)
+  while(added && result.length < 40){
 
-    for(const word of sorted.slice(0,max)){
+    added = false
 
-      result.push({
-        word,
-        ending:label
-      })
+    for(const type of order){
+
+      const arr = categories[type]
+
+      if(arr[round]){
+
+        result.push({
+          word: arr[round],
+          ending: type
+        })
+
+        added = true
+
+      }
 
     }
 
+    round++
+
   }
 
-  addSome(categories.ters,"ters")
-  addSome(categories.ler,"ler")
-  addSome(categories.raph,"raph")
-  addSome(categories.ally,"ally")
-  addSome(categories.omo,"omo")
-  addSome(categories.ines,"ines")
-  addSome(categories.ion,"ion")
-
-  return result.slice(0,40)
+  return result
 
 }
 
