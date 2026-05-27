@@ -26,7 +26,7 @@ function buildIndex(list){
 
 }
 
-function shuffleArray(arr){
+function shuffle(arr){
 
   const a = [...arr]
 
@@ -42,11 +42,14 @@ function shuffleArray(arr){
 
 }
 
-function shuffleSameLength(words){
+function sortWords(words){
+
+  const unique = [...new Set(words)]
+    .filter(w => w.length >= 3)
 
   const groups = new Map()
 
-  for(const w of words){
+  for(const w of unique){
 
     const len = w.length
 
@@ -60,13 +63,14 @@ function shuffleSameLength(words){
 
   const result = []
 
-  const lengths = [...groups.keys()].sort((a,b)=>a-b)
+  const lengths = [...groups.keys()]
+    .sort((a,b)=>a-b)
 
   for(const len of lengths){
 
-    const arr = shuffleArray(groups.get(len))
-
-    result.push(...arr)
+    result.push(
+      ...shuffle(groups.get(len))
+    )
 
   }
 
@@ -74,21 +78,42 @@ function shuffleSameLength(words){
 
 }
 
-function sortWords(words){
+function randomizeObjects(arr){
 
-  return shuffleSameLength(
+  const groups = new Map()
 
-    [...new Set(words)]
-      .filter(w => w.length >= 3)
-      .sort((a,b)=>a.length-b.length)
+  for(const obj of arr){
 
-  )
+    const len = obj.play.length
+
+    if(!groups.has(len)){
+      groups.set(len,[])
+    }
+
+    groups.get(len).push(obj)
+
+  }
+
+  const result = []
+
+  const lengths = [...groups.keys()]
+    .sort((a,b)=>a-b)
+
+  for(const len of lengths){
+
+    result.push(
+      ...shuffle(groups.get(len))
+    )
+
+  }
+
+  return result
 
 }
 
 function search(query){
 
-  const raw = query.trim()
+  const raw = query
 
   if(raw.startsWith(" ")){
 
@@ -119,7 +144,9 @@ function search(query){
 
   if(suffix){
 
-    results = results.filter(w => w.endsWith(suffix))
+    results = results.filter(w =>
+      w.endsWith(suffix)
+    )
 
   }
 
@@ -135,16 +162,21 @@ function getResponses(trap){
 
     if(w === trap) return false
 
-    if(w.length <= trap.length + 2) return false
+    if(w.length <= trap.length + 2){
+      return false
+    }
 
-    if(
-      w === trap + "s" ||
-      w === trap + "es" ||
-      w === trap + "ed" ||
-      w === trap + "er" ||
-      w === trap + "d" ||
-      w === trap + "r"
-    ){
+    const bad = [
+      trap + "s",
+      trap + "es",
+      trap + "ed",
+      trap + "er",
+      trap + "d",
+      trap + "r",
+      trap + "ing"
+    ]
+
+    if(bad.includes(w)){
       return false
     }
 
@@ -160,13 +192,13 @@ function buildTraps(prefix,len,min,max){
 
   const trapMap = new Map()
 
-  for(const word of playable.slice(0,700)){
+  for(const word of shuffle(playable).slice(0,1000)){
 
-    if(word.length <= prefix.length + len) continue
+    if(word.length <= prefix.length + len){
+      continue
+    }
 
     const trap = word.slice(-len)
-
-    if(trap.length < len) continue
 
     const responses = getResponses(trap)
 
@@ -189,7 +221,7 @@ function buildTraps(prefix,len,min,max){
 
   }
 
-  return shuffleSameLength(
+  return randomizeObjects(
     [...trapMap.values()]
   ).slice(0,10)
 
@@ -197,7 +229,9 @@ function buildTraps(prefix,len,min,max){
 
 function buildSpam(prefix){
 
-  const playable = index.get(prefix) || []
+  const playable = shuffle(
+    index.get(prefix) || []
+  )
 
   const categories = {
 
@@ -211,7 +245,7 @@ function buildSpam(prefix){
 
   }
 
-  for(const w of playable.slice(0,1500)){
+  for(const w of playable.slice(0,2000)){
 
     if(w.length < 5) continue
 
@@ -260,9 +294,11 @@ function buildSpam(prefix){
 
   }
 
-  for(const key in categories){
+  for(const k in categories){
 
-    categories[key] = sortWords(categories[key])
+    categories[k] = shuffle(
+      sortWords(categories[k])
+    )
 
   }
 
@@ -306,7 +342,7 @@ function buildSpam(prefix){
 
   }
 
-  return result
+  return shuffle(result)
 
 }
 
@@ -328,19 +364,24 @@ self.onmessage = e =>{
 
   if(type==="SEARCH"){
 
-    const prefix = payload.toLowerCase()
+    const query = payload.toLowerCase()
 
-    const results = search(prefix).slice(0,30)
+    const results = search(query)
+      .slice(0,30)
 
-    const traps3 = buildTraps(prefix,3,1,7)
-    const traps4 = buildTraps(prefix,4,1,7)
+    const traps3 = buildTraps(query,3,1,7)
 
-    const best = [
-      ...buildTraps(prefix,3,1,1),
-      ...buildTraps(prefix,4,1,1)
-    ].slice(0,20)
+    const traps4 = buildTraps(query,4,1,7)
 
-    const spam = buildSpam(prefix)
+    const best = randomizeObjects([
+
+      ...buildTraps(query,3,1,1),
+
+      ...buildTraps(query,4,1,1)
+
+    ]).slice(0,20)
+
+    const spam = buildSpam(query)
 
     postMessage({
 
