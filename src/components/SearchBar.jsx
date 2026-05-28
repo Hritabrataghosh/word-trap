@@ -1,31 +1,27 @@
-import { useState } from "react"
+export default function SearchBar({
 
-export default function SearchBar({ onSearch }) {
+  letters,
+  setLetters,
+  solve
 
-  const [value,setValue] = useState("")
-
-  function handleChange(e){
-    const v = e.target.value
-    setValue(v)
-    onSearch(v)
-  }
-
-  function handleFocus(){
-    if(value !== ""){
-      setValue("")
-      onSearch("")
-    }
-  }
+}){
 
   return(
 
-    <input
-      className="search"
-      value={value}
-      onChange={handleChange}
-      onFocus={handleFocus}
-      placeholder="type letters..."
-    />
+    <div className="searchBar">
+
+      <input
+        type="text"
+        placeholder='type letters or " ters"'
+        value={letters}
+        onChange={(e)=>setLetters(e.target.value)}
+      />
+
+      <button onClick={solve}>
+        Solve
+      </button>
+
+    </div>
 
   )
 

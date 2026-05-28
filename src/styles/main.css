@@ -5,16 +5,20 @@ body,
   margin:0;
   padding:0;
 
-  width:100%;
-  height:100%;
-
-  background:#07111f;
+  min-height:100%;
 
   font-family:Arial, Helvetica, sans-serif;
+
+  background:
+  radial-gradient(circle at top,#13315c,#07111f);
+
+  color:white;
 
 }
 
 .app{
+
+  width:100%;
 
   min-height:100vh;
 
@@ -23,34 +27,47 @@ body,
 
   align-items:center;
 
-  padding-top:60px;
+  padding:30px 15px;
 
-  background:
-  radial-gradient(circle at top,#10294d,#07111f);
-
-  color:white;
+  box-sizing:border-box;
 
 }
 
-.top{
+.title{
+
+  font-size:42px;
+
+  font-weight:900;
+
+  margin-bottom:30px;
+
+  color:#42c8ff;
+
+}
+
+.searchBar{
 
   display:flex;
 
-  gap:14px;
+  gap:12px;
 
-  margin-bottom:50px;
+  width:100%;
+
+  max-width:700px;
+
+  margin-bottom:40px;
 
 }
 
-input{
+.searchBar input{
 
-  width:320px;
+  flex:1;
 
   padding:16px;
 
   border:none;
 
-  border-radius:14px;
+  border-radius:16px;
 
   outline:none;
 
@@ -58,13 +75,13 @@ input{
 
 }
 
-button{
+.searchBar button{
 
-  padding:16px 28px;
+  padding:16px 26px;
 
   border:none;
 
-  border-radius:14px;
+  border-radius:16px;
 
   background:#00b7ff;
 
@@ -78,68 +95,104 @@ button{
 
 }
 
-.hud{
+.section{
 
-  width:1200px;
+  width:100%;
 
-  background:rgba(4,12,24,.9);
+  max-width:1200px;
 
-  border:2px solid #00b7ff;
-
-  border-radius:24px;
-
-  display:flex;
-
-  justify-content:space-around;
-
-  padding:30px 10px;
-
-  box-shadow:
-  0 0 25px rgba(0,183,255,.35);
+  margin-bottom:35px;
 
 }
 
-.box{
+.section h2{
 
-  display:flex;
-  flex-direction:column;
+  margin-bottom:18px;
 
-  align-items:center;
-
-}
-
-.label{
-
-  font-size:14px;
-
-  color:#7f95b4;
-
-  margin-bottom:10px;
-
-  font-weight:700;
+  color:#91c8ff;
 
 }
 
-.value{
+.wordGrid{
 
-  font-size:42px;
+  display:grid;
+
+  grid-template-columns:
+  repeat(auto-fit,minmax(170px,1fr));
+
+  gap:16px;
+
+}
+
+.wordCard{
+
+  padding:20px;
+
+  border-radius:18px;
+
+  text-align:center;
+
+  font-size:24px;
 
   font-weight:900;
 
+  word-break:break-word;
+
+  box-shadow:
+  0 0 18px rgba(0,183,255,.15);
+
 }
 
-.best{
+.normal{
+
+  background:#081a2f;
+
+  border:2px solid #41c3ff;
+
   color:#41c3ff;
+
 }
 
-.trap3{
-  color:#ffd057;
-}
+.trap{
 
-.trap4{
+  background:#241227;
+
+  border:2px solid #ff7bd5;
+
   color:#ff7bd5;
+
 }
 
 .spam{
+
+  background:#10261d;
+
+  border:2px solid #76ffb0;
+
   color:#76ffb0;
+
+}
+
+@media(max-width:700px){
+
+  .title{
+
+    font-size:30px;
+
+  }
+
+  .searchBar{
+
+    flex-direction:column;
+
+  }
+
+  .wordCard{
+
+    font-size:18px;
+
+    padding:16px;
+
+  }
+
 }

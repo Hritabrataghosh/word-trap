@@ -1,8 +1,7 @@
 export default function TrapSection({
 
   title,
-  traps=[],
-  compact=false
+  words
 
 }){
 
@@ -10,60 +9,14 @@ export default function TrapSection({
 
     <div className="section">
 
-      <div className="section-header">
+      <h2>{title}</h2>
 
-        <span>{title}</span>
+      <div className="wordGrid">
 
-        <span className="count">
-          {traps.length}
-        </span>
+        {words.map((w,i)=>(
 
-      </div>
-
-      <div className={
-        compact
-        ? "compact-grid"
-        : "trap-grid"
-      }>
-
-        {traps.map((t,i)=>(
-
-          <div
-            key={i}
-            className="mini-trap"
-          >
-
-            <div className="mini-play">
-
-              <span className="play-word">
-                {t.play}
-              </span>
-
-              <span className="arrow">
-                →
-              </span>
-
-              <span className="trap-end">
-                {t.ending}
-              </span>
-
-            </div>
-
-            <div className="mini-solves">
-
-              {t.solutions.map((w,j)=>(
-
-                <span
-                  key={j}
-                  className="word"
-                >
-                  {w}
-                </span>
-
-              ))}
-
-            </div>
-
+          <div key={i} className="wordCard trap">
+            {w}
           </div>
 
         ))}

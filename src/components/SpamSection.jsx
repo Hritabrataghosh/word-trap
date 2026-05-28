@@ -1,49 +1,29 @@
-export default function SpamSection({spam=[]}){
+export default function SpamSection({
 
-if(spam.length===0){
-return null
-}
+  words
 
-return(
+}){
 
-<div className="section">
+  return(
 
-<div className="section-header">
+    <div className="section">
 
-<span>Spammable Chains</span>
+      <h2>Spam Words</h2>
 
-<span className="count">
-{spam.length}
-</span>
+      <div className="wordGrid">
 
-</div>
+        {words.map((w,i)=>(
 
-<div className="trap-grid">
+          <div key={i} className="wordCard spam">
+            {w}
+          </div>
 
-{spam.map((s,i)=>(
+        ))}
 
-<div key={i} className="trap-card">
+      </div>
 
-<span className="trap-label">
-{s.word}
-</span>
+    </div>
 
-<span className="arrow">
-→
-</span>
-
-<span className="trap-end">
-{s.ending}
-</span>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-)
+  )
 
 }
