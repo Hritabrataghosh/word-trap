@@ -15,7 +15,10 @@ export default function WordList({
 
         {words.map((w,i)=>(
 
-          <div key={i} className="wordCard normal">
+          <div
+            key={i}
+            className="wordCard normal"
+          >
             {w}
           </div>
 

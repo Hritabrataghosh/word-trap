@@ -13,6 +13,7 @@ export default function SearchBar({
         type="text"
         placeholder='type letters or " ters"'
         value={letters}
+
         onChange={(e)=>setLetters(e.target.value)}
 
         onDoubleClick={()=>setLetters("")}

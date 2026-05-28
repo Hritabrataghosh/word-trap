@@ -15,7 +15,10 @@ export default function TrapSection({
 
         {words.map((w,i)=>(
 
-          <div key={i} className="wordCard trap">
+          <div
+            key={i}
+            className="wordCard trap"
+          >
             {w}
           </div>
 
