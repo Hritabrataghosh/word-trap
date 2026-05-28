@@ -1,125 +1,137 @@
-html,
-body,
-#root{
+body{
 
   margin:0;
-  padding:0;
 
-  width:100%;
-  height:100%;
+  background:#07111f;
 
-  overflow:hidden;
-
-  background:#111827;
+  color:white;
 
   font-family:Arial, Helvetica, sans-serif;
 
 }
 
-.overlay{
+.app{
 
-  width:100vw;
-  height:100vh;
+  max-width:1400px;
+
+  margin:auto;
+
+  padding:24px;
+
+}
+
+h1{
+
+  font-size:52px;
+
+  margin-bottom:24px;
+
+}
+
+.search{
+
+  width:100%;
+
+  padding:18px;
+
+  font-size:24px;
+
+  border-radius:14px;
+
+  border:none;
+
+  margin-bottom:30px;
+
+}
+
+section{
+
+  margin-bottom:42px;
+
+}
+
+h2{
+
+  margin-bottom:16px;
+
+}
+
+.grid{
 
   display:flex;
 
-  justify-content:center;
+  flex-wrap:wrap;
 
-  align-items:flex-start;
-
-  padding-top:15px;
+  gap:10px;
 
 }
 
-.hud{
+.word,
+.trap{
 
-  width:1350px;
-  height:72px;
+  background:#13233d;
 
-  background:rgba(4,12,24,.82);
+  padding:10px 14px;
 
-  border:2px solid rgba(0,180,255,.8);
+  border-radius:10px;
 
-  border-radius:18px;
-
-  display:flex;
-
-  justify-content:space-around;
-  align-items:center;
-
-  backdrop-filter:blur(12px);
-
-  box-shadow:
-    0 0 18px rgba(0,180,255,.28),
-    inset 0 0 10px rgba(0,180,255,.12);
-
-}
-.box{
-
-  display:flex;
-
-  flex-direction:column;
-
-  align-items:center;
-
-  justify-content:center;
-
-  min-width:220px;
+  font-weight:bold;
 
 }
 
-.label{
+.trap{
 
-  font-size:11px;
-
-  color:#8aa4c7;
-
-  margin-bottom:5px;
-
-  font-weight:700;
-
-  letter-spacing:1px;
-
-}
-.value{
-
-  font-size:18px;
-
-  font-weight:900;
-
-  text-shadow:0 0 8px currentColor;
-
-  max-width:180px;
-
-  overflow:hidden;
-
-  text-overflow:ellipsis;
-
-  white-space:nowrap;
-
-  text-align:center;
-
-}
-.best{
-
-  color:#42c5ff;
+  background:#20324f;
 
 }
 
-.trap3{
+.compact .trap{
 
-  color:#ffcc55;
+  padding:8px 12px;
 
 }
 
-.trap4{
+.spamGrid{
 
-  color:#ff77aa;
+  display:grid;
+
+  grid-template-columns:
+    repeat(auto-fit,minmax(260px,1fr));
+
+  gap:16px;
 
 }
 
 .spam{
 
-  color:#77ffbb;
+  background:#13233d;
+
+  border-radius:14px;
+
+  padding:14px;
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+}
+
+.spamWord{
+
+  background:#33bfff;
+
+  padding:8px 12px;
+
+  border-radius:8px;
+
+  font-weight:bold;
+
+}
+
+.suffix{
+
+  color:#d7d7d7;
 
 }

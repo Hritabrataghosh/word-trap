@@ -1,170 +1,302 @@
-import { useEffect, useMemo, useState } from "react"
-
+import { useMemo, useState } from "react"
 import "./styles/main.css"
 
 import wordsRaw from "../allwords.txt?raw"
 
+const SPAM_SUFFIXES = [
+  "ters",
+  "ally",
+  "ines",
+  "tion",
+  "raph",
+  "ler",
+  "omo"
+]
+
 export default function App(){
 
-  const [letters,setLetters] = useState("")
+  const [query,setQuery] = useState("")
 
   const words = useMemo(()=>{
 
     return wordsRaw
-
       .split("\n")
-
       .map(w=>w.trim().toLowerCase())
-
       .filter(w=>w.length >= 3)
 
   },[])
 
-  useEffect(()=>{
+  const isEndingSearch = query.startsWith(" ")
 
-    if(window.electronAPI){
+  const clean = query.trim().toLowerCase()
 
-      window.electronAPI.onOCR((word)=>{
+  const filtered = useMemo(()=>{
 
-        setLetters(word)
+    if(!clean) return []
 
-      })
+    let arr = words.filter(word=>{
+
+      if(isEndingSearch){
+
+        return word.endsWith(clean)
+
+      }
+
+      return word.startsWith(clean)
+
+    })
+
+    arr = [...new Set(arr)]
+
+    arr.sort(()=>Math.random() - 0.5)
+
+    return arr.slice(0,400)
+
+  },[clean,isEndingSearch,words])
+
+  function isTrap(word){
+
+    const solves = words.filter(w=>{
+
+      if(w === word) return false
+
+      return w.startsWith(word)
+
+    })
+
+    if(solves.length < 3) return false
+
+    const shortSolves = solves.filter(w=>{
+
+      const diff = w.length - word.length
+
+      return diff <= 2
+
+    })
+
+    if(shortSolves.length === 0){
+
+      return true
 
     }
 
-  },[])
+    const commonEnds = [
 
-  function matches(word,input){
-
-    return word.startsWith(input)
-
-  }
-
-  const solves = useMemo(()=>{
-
-    if(!letters) return []
-
-    return words
-
-      .filter(w=>matches(w,letters))
-
-      .sort((a,b)=>a.length - b.length)
-
-      .slice(0,500)
-
-  },[letters,words])
-
-  const best = solves[0] || "..."
-
-  const trap3 = useMemo(()=>{
-
-    return solves.find(w=>w.length === 3) || "..."
-
-  },[solves])
-
-  const trap4 = useMemo(()=>{
-
-    return solves.find(w=>w.length === 4) || "..."
-
-  },[solves])
-
-  const spam = useMemo(()=>{
-
-    const suffixes = [
-
-      "tion",
-      "ines",
-      "ally",
-      "ters",
-      "raph",
-      "ler",
-      "omo"
+      "s",
+      "es",
+      "ed",
+      "er",
+      "ing"
 
     ]
 
-    for(const s of suffixes){
+    const valid = shortSolves.some(w=>{
 
-      const found = solves.find(
+      const extra = w.slice(word.length)
 
-        w=>w.endsWith(s)
+      return commonEnds.includes(extra)
 
-      )
+    })
 
-      if(found) return found
+    return !valid
+
+  }
+
+  const traps3 = useMemo(()=>{
+
+    const arr = filtered.filter(w=>
+      w.length === 3 && isTrap(w)
+    )
+
+    arr.sort(()=>Math.random() - 0.5)
+
+    return arr.slice(0,12)
+
+  },[filtered])
+
+  const traps4 = useMemo(()=>{
+
+    const arr = filtered.filter(w=>
+      w.length === 4 && isTrap(w)
+    )
+
+    arr.sort(()=>Math.random() - 0.5)
+
+    return arr.slice(0,12)
+
+  },[filtered])
+
+  const spamWords = useMemo(()=>{
+
+    const grouped = {}
+
+    for(const suffix of SPAM_SUFFIXES){
+
+      grouped[suffix] = []
 
     }
 
-    return solves[1] || "..."
+    for(const word of filtered){
 
-  },[solves])
+      for(const suffix of SPAM_SUFFIXES){
+
+        if(word.endsWith(suffix)){
+
+          grouped[suffix].push(word)
+
+        }
+
+      }
+
+    }
+
+    const result = []
+
+    let added = true
+    let round = 0
+
+    while(added){
+
+      added = false
+
+      for(const suffix of SPAM_SUFFIXES){
+
+        if(grouped[suffix][round]){
+
+          result.push({
+
+            word:grouped[suffix][round],
+            suffix
+          })
+
+          added = true
+
+        }
+
+      }
+
+      round++
+
+    }
+
+    return result.slice(0,30)
+
+  },[filtered])
 
   return(
 
-    <div className="overlay">
+    <div className="app">
 
-      <div className="hud">
+      <h1>
+        Word Trap Solver
+      </h1>
 
-        <div className="box">
+      <input
+        value={query}
+        onChange={(e)=>setQuery(e.target.value)}
+        placeholder='type letters or " ters"'
+        className="search"
+      />
 
-          <div className="label">
-            BEST
-          </div>
+      <section>
 
-          <div
-            className="value"
-            style={{color:"#49b7ff"}}
-          >
-            {best}
-          </div>
+        <h2>
+          Words
+        </h2>
 
-        </div>
+        <div className="grid">
 
-        <div className="box">
+          {filtered.map(word=>(
 
-          <div className="label">
-            3 TRAP
-          </div>
+            <div
+              key={word}
+              className="word"
+            >
+              {word}
+            </div>
 
-          <div
-            className="value"
-            style={{color:"#ffc94d"}}
-          >
-            {trap3}
-          </div>
-
-        </div>
-
-        <div className="box">
-
-          <div className="label">
-            4 TRAP
-          </div>
-
-          <div
-            className="value"
-            style={{color:"#ff79c6"}}
-          >
-            {trap4}
-          </div>
+          ))}
 
         </div>
 
-        <div className="box">
+      </section>
 
-          <div className="label">
-            SPAM
-          </div>
+      <section>
 
-          <div
-            className="value"
-            style={{color:"#74ffb0"}}
-          >
-            {spam}
-          </div>
+        <h2>
+          3 Letter Traps
+        </h2>
+
+        <div className="grid compact">
+
+          {traps3.map(word=>(
+
+            <div
+              key={word}
+              className="trap"
+            >
+              {word}
+            </div>
+
+          ))}
 
         </div>
 
-      </div>
+      </section>
+
+      <section>
+
+        <h2>
+          4 Letter Traps
+        </h2>
+
+        <div className="grid compact">
+
+          {traps4.map(word=>(
+
+            <div
+              key={word}
+              className="trap"
+            >
+              {word}
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
+
+      <section>
+
+        <h2>
+          Spammable Chains
+        </h2>
+
+        <div className="spamGrid">
+
+          {spamWords.map((item,index)=>(
+
+            <div
+              key={index}
+              className="spam"
+            >
+
+              <span className="spamWord">
+                {item.word}
+              </span>
+
+              <span className="suffix">
+                → {item.suffix}
+              </span>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
 
     </div>
 
