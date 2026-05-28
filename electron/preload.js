@@ -2,14 +2,14 @@ import { contextBridge,ipcRenderer } from "electron"
 
 contextBridge.exposeInMainWorld("electronAPI",{
 
-onOCR:(callback)=>{
+  onOCR:(callback)=>{
 
-ipcRenderer.on("ocr-word",(e,word)=>{
+    ipcRenderer.on("ocr-word",(e,word)=>{
 
-callback(word)
+      callback(word)
 
-})
+    })
 
-}
+  }
 
 })

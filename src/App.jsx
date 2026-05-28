@@ -1,205 +1,173 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
-import SearchBar from "./components/SearchBar"
-import WordList from "./components/WordList"
-import TrapSection from "./components/TrapSection"
-import SpamSection from "./components/SpamSection"
+import "./styles/main.css"
+
+import wordsRaw from "../allwords.txt?raw"
 
 export default function App(){
 
-const worker = useRef(null)
+  const [letters,setLetters] = useState("")
 
-const [mode,setMode] = useState("normal")
+  const words = useMemo(()=>{
 
-const [results,setResults] = useState([])
+    return wordsRaw
 
-const [traps3,setTraps3] = useState([])
-const [traps4,setTraps4] = useState([])
+      .split("\n")
 
-const [spamChains,setSpamChains] = useState([])
+      .map(w=>w.trim().toLowerCase())
 
-const [ocrWord,setOCRWord] = useState("")
+      .filter(w=>w.length >= 3)
 
-useEffect(()=>{
+  },[])
 
-worker.current = new Worker(
-new URL("./worker/searchWorker.js",import.meta.url),
-{type:"module"}
-)
+  useEffect(()=>{
 
-worker.current.onmessage = e =>{
+    if(window.electronAPI){
 
-const {
-results,
-traps3,
-traps4,
-spamChains
-} = e.data
+      window.electronAPI.onOCR((word)=>{
 
-setResults(results || [])
+        setLetters(word)
 
-setTraps3(traps3 || [])
-setTraps4(traps4 || [])
+      })
 
-setSpamChains(spamChains || [])
+    }
 
-}
+  },[])
 
-async function loadWords(){
+  function matches(word,input){
 
-const text = await fetch("/alphawords.txt")
-.then(r=>r.text())
+    return word.startsWith(input)
 
-const words = text
-.split("\n")
-.map(w=>w.trim().toLowerCase())
-.filter(w=>w.length >= 3)
+  }
 
-worker.current.postMessage({
-type:"LOAD",
-payload:words
-})
+  const solves = useMemo(()=>{
 
-}
+    if(!letters) return []
 
-loadWords()
+    return words
 
-},[])
+      .filter(w=>matches(w,letters))
 
-useEffect(()=>{
+      .sort((a,b)=>a.length - b.length)
 
-if(window.electronAPI){
+      .slice(0,500)
 
-window.electronAPI.onOCR(word=>{
+  },[letters,words])
 
-if(!word) return
+  const best = solves[0] || "..."
 
-setOCRWord(word)
+  const trap3 = useMemo(()=>{
 
-handleSearch(word)
+    return solves.find(w=>w.length === 3) || "..."
 
-})
+  },[solves])
 
-}
+  const trap4 = useMemo(()=>{
 
-},[])
+    return solves.find(w=>w.length === 4) || "..."
 
-function handleSearch(q){
+  },[solves])
 
-if(!worker.current) return
+  const spam = useMemo(()=>{
 
-worker.current.postMessage({
+    const suffixes = [
 
-type:"SEARCH",
+      "tion",
+      "ines",
+      "ally",
+      "ters",
+      "raph",
+      "ler",
+      "omo"
 
-payload:{
-query:q.toLowerCase(),
-mode
-}
+    ]
 
-})
+    for(const s of suffixes){
 
-}
+      const found = solves.find(
 
-return(
+        w=>w.endsWith(s)
 
-<div className="app overlay-mode">
+      )
 
-<h1 className="title">
-Word Trap Solver
-</h1>
+      if(found) return found
 
-<div className="mode-switch">
+    }
 
-<button
-className={mode==="normal" ? "active" : ""}
-onClick={()=>setMode("normal")}
->
-Normal
-</button>
+    return solves[1] || "..."
 
-<button
-className={mode==="spam" ? "active" : ""}
-onClick={()=>setMode("spam")}
->
-Spam
-</button>
+  },[solves])
 
-</div>
+  return(
 
-<SearchBar
-onSearch={handleSearch}
-/>
+    <div className="overlay">
 
-{ocrWord && (
+      <div className="hud">
 
-<div className="ocr-live">
+        <div className="box">
 
-LIVE:
-<span>{ocrWord}</span>
+          <div className="label">
+            BEST
+          </div>
 
-</div>
+          <div
+            className="value"
+            style={{color:"#49b7ff"}}
+          >
+            {best}
+          </div>
 
-)}
+        </div>
 
-<div className="compact-area">
+        <div className="box">
 
-<div className="compact-block">
+          <div className="label">
+            3 TRAP
+          </div>
 
-<h2>
-Words
-</h2>
+          <div
+            className="value"
+            style={{color:"#ffc94d"}}
+          >
+            {trap3}
+          </div>
 
-<WordList words={results}/>
+        </div>
 
-</div>
+        <div className="box">
 
-{mode==="normal" && (
+          <div className="label">
+            4 TRAP
+          </div>
 
-<>
+          <div
+            className="value"
+            style={{color:"#ff79c6"}}
+          >
+            {trap4}
+          </div>
 
-<div className="compact-block">
+        </div>
 
-<h2>
-3 Letter Traps
-</h2>
+        <div className="box">
 
-<TrapSection traps={traps3}/>
+          <div className="label">
+            SPAM
+          </div>
 
-</div>
+          <div
+            className="value"
+            style={{color:"#74ffb0"}}
+          >
+            {spam}
+          </div>
 
-<div className="compact-block">
+        </div>
 
-<h2>
-4 Letter Traps
-</h2>
+      </div>
 
-<TrapSection traps={traps4}/>
+    </div>
 
-</div>
-
-</>
-
-)}
-
-{mode==="spam" && (
-
-<div className="compact-block">
-
-<h2>
-Spammable Chains
-</h2>
-
-<SpamSection chains={spamChains}/>
-
-</div>
-
-)}
-
-</div>
-
-</div>
-
-)
+  )
 
 }

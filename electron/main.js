@@ -1,46 +1,60 @@
-import { app,BrowserWindow } from "electron"
-
+import { app, BrowserWindow } from "electron"
 import path from "path"
 
-import { fileURLToPath } from "url"
-
-import { startOCR } from "./ocr.js"
-
-const __filename = fileURLToPath(import.meta.url)
-
-const __dirname = path.dirname(__filename)
+let win
 
 function createWindow(){
 
-const win = new BrowserWindow({
+  win = new BrowserWindow({
 
-width:420,
-height:240,
+    width:1600,
+    height:170,
 
-transparent:true,
+    x:150,
+    y:850,
 
-frame:false,
+    transparent:false,
 
-alwaysOnTop:true,
+    frame:false,
 
-resizable:false,
+    alwaysOnTop:true,
 
-skipTaskbar:true,
+    skipTaskbar:false,
 
-hasShadow:false,
+    resizable:false,
 
-backgroundColor:"#00000000",
+    movable:true,
 
-webPreferences:{
-preload:path.join(__dirname,"preload.js"),
-contextIsolation:true
-}
+    focusable:true,
 
-})
+    hasShadow:false,
 
-win.loadURL("http://localhost:5173")
+    backgroundColor:"#050b16",
 
-startOCR(win)
+    webPreferences:{
+
+      preload:path.join(
+        process.cwd(),
+        "electron/preload.js"
+      )
+
+    }
+
+  })
+
+  win.loadURL("http://localhost:5173")
+
+  win.setAlwaysOnTop(true,"screen-saver")
+
+  win.on("blur",()=>{
+
+    win.setAlwaysOnTop(true,"screen-saver")
+
+    win.show()
+
+    win.focus()
+
+  })
 
 }
 
