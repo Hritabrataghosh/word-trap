@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState,useEffect } from "react"
+
 import SearchBar from "./components/SearchBar"
 import WordList from "./components/WordList"
 import TrapSection from "./components/TrapSection"
@@ -14,53 +15,77 @@ export default function App(){
   const [trap3,setTrap3] = useState([])
   const [trap4,setTrap4] = useState([])
   const [trap5,setTrap5] = useState([])
-
   const [spamWords,setSpamWords] = useState([])
+
+  useEffect(()=>{
+
+    solve()
+
+  },[letters])
 
   function solve(){
 
-    if(!letters.trim()) return
+    if(!letters.trim()){
+
+      setNormalWords([])
+      setTrap3([])
+      setTrap4([])
+      setTrap5([])
+      setSpamWords([])
+
+      return
+
+    }
 
     const txt = letters.toLowerCase()
 
-    const normal = [
+    setNormalWords([
+
       txt + "ing",
       txt + "er",
       txt + "ed",
+      txt + "ment",
       txt + "ation",
-      txt + "ment"
-    ]
+      txt + "ness"
 
-    const t3 = [
+    ])
+
+    setTrap3([
+
       txt + "ly",
       txt + "ry",
-      txt + "ty"
-    ]
+      txt + "ty",
+      txt + "cy"
 
-    const t4 = [
+    ])
+
+    setTrap4([
+
       txt + "tion",
       txt + "sion",
-      txt + "ness"
-    ]
+      txt + "ness",
+      txt + "ment"
 
-    const t5 = [
+    ])
+
+    setTrap5([
+
       txt + "ingly",
+      txt + "ments",
       txt + "ation",
-      txt + "ments"
-    ]
+      txt + "lessly"
 
-    const spam = [
+    ])
+
+    setSpamWords([
+
       txt + "s",
       txt + "es",
       txt + "ers",
-      txt + "ines"
-    ]
+      txt + "ines",
+      txt + "ings"
 
-    setNormalWords(normal)
-    setTrap3(t3)
-    setTrap4(t4)
-    setTrap5(t5)
-    setSpamWords(spam)
+    ])
 
   }
 
@@ -75,7 +100,6 @@ export default function App(){
       <SearchBar
         letters={letters}
         setLetters={setLetters}
-        solve={solve}
       />
 
       <WordList

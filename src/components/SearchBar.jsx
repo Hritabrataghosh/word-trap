@@ -1,8 +1,7 @@
 export default function SearchBar({
 
   letters,
-  setLetters,
-  solve
+  setLetters
 
 }){
 
@@ -15,11 +14,9 @@ export default function SearchBar({
         placeholder='type letters or " ters"'
         value={letters}
         onChange={(e)=>setLetters(e.target.value)}
-      />
 
-      <button onClick={solve}>
-        Solve
-      </button>
+        onDoubleClick={()=>setLetters("")}
+      />
 
     </div>
 
